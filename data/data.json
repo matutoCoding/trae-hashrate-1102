@@ -30,7 +30,7 @@
       "serviceType": "剪发",
       "isVip": false,
       "status": "waiting",
-      "position": 2,
+      "position": 1,
       "createdAt": {
         "__type": "Date",
         "value": "2026-06-16T17:05:29.096Z"
@@ -44,7 +44,7 @@
       "serviceType": "剪发",
       "isVip": false,
       "status": "waiting",
-      "position": 3,
+      "position": 2,
       "createdAt": {
         "__type": "Date",
         "value": "2026-06-16T17:06:14.721Z"
@@ -82,7 +82,7 @@
       "serviceType": "剪发",
       "isVip": false,
       "status": "waiting",
-      "position": 4,
+      "position": 3,
       "createdAt": {
         "__type": "Date",
         "value": "2026-06-16T17:24:04.046Z"
@@ -96,13 +96,90 @@
       "serviceType": "剪发",
       "isVip": true,
       "vipLevel": 2,
-      "status": "waiting",
+      "status": "completed",
       "position": 1,
       "createdAt": {
         "__type": "Date",
         "value": "2026-06-16T17:29:28.566Z"
       },
-      "originalPosition": 4
+      "originalPosition": 4,
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:18.988Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:19.023Z"
+      }
+    },
+    {
+      "id": "id-43uhhyr3xl8x81ayd9paa",
+      "ticketNumber": 106,
+      "customerName": "普通1",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "waiting",
+      "position": 4,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:00.232Z"
+      },
+      "originalPosition": 5
+    },
+    {
+      "id": "id-93m00mi0pl5c7dx24z9d0a",
+      "ticketNumber": 107,
+      "customerName": "普通2",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "waiting",
+      "position": 5,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:00.262Z"
+      },
+      "originalPosition": 6
+    },
+    {
+      "id": "id-lrswtf18hgm92ezub8w78",
+      "ticketNumber": 108,
+      "customerName": "VIP测试",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "vipLevel": 2,
+      "status": "completed",
+      "position": 1,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:00.290Z"
+      },
+      "originalPosition": 7,
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:42:04.012Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:42:04.045Z"
+      }
+    },
+    {
+      "id": "id-xfyyna3ohvhsly6lj6qhdk",
+      "ticketNumber": 109,
+      "customerName": "测试取消",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "cancelled",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:42:26.222Z"
+      },
+      "originalPosition": 6
     }
   ],
   "insertRecords": [
@@ -142,6 +219,27 @@
         "id-82n5a0yv07padx8xewnog4"
       ],
       "reason": "年卡会员优先"
+    },
+    {
+      "id": "id-c1dmldasypphh8j20m8694",
+      "ticketId": "id-lrswtf18hgm92ezub8w78",
+      "customerName": "VIP测试",
+      "vipLevel": 2,
+      "originalPosition": 7,
+      "newPosition": 2,
+      "insertTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:00.294Z"
+      },
+      "operator": "system",
+      "affectedTickets": [
+        "id-pkbd9bpuwr1qct6yjjaeq",
+        "id-pl2e5pprp2cgs0yuo2ofq",
+        "id-82n5a0yv07padx8xewnog4",
+        "id-43uhhyr3xl8x81ayd9paa",
+        "id-93m00mi0pl5c7dx24z9d0a"
+      ],
+      "reason": "VIP会员取号优先排队"
     }
   ],
   "pricingRates": [
@@ -240,7 +338,61 @@
         "__type": "Date",
         "value": "2026-06-16T17:27:57.825Z"
       }
+    },
+    {
+      "id": "id-sj3gigu91nby9dyxk8w8l",
+      "ticketId": "id-dv99yi5h8rimwxqkowdmp",
+      "customerName": "VIP测试",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:18.988Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:19.021Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "pending",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:41:19.021Z"
+      }
+    },
+    {
+      "id": "id-er9u9p8u7sqbszcvg90g3w",
+      "ticketId": "id-lrswtf18hgm92ezub8w78",
+      "customerName": "VIP测试",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:42:04.012Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T02:30:00.000Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "pending",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:42:04.043Z"
+      }
     }
   ],
-  "ticketCounter": 106
+  "ticketCounter": 110
 }

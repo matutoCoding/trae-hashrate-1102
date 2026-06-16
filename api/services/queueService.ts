@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
   getQueue,
+  getAllQueueItems as getAllQueueItemsFromStore,
   addQueueItem,
   updateQueueItem,
   getQueueItemById,
@@ -16,7 +17,7 @@ function generateId(): string {
 }
 
 export function getAllQueueItems(): QueueItem[] {
-  return getQueue();
+  return getAllQueueItemsFromStore();
 }
 
 export function getQueueStats() {
@@ -35,6 +36,7 @@ export function getQueueStats() {
 export function createTicket(request: CreateTicketRequest): QueueItem {
   const queue = getQueue();
   const waitingItems = queue.filter(item => item.status === 'waiting');
+  const originalPosition = waitingItems.length + 1;
   
   const newItem: QueueItem = {
     id: generateId(),
@@ -45,14 +47,39 @@ export function createTicket(request: CreateTicketRequest): QueueItem {
     isVip: request.isVip,
     vipLevel: request.vipLevel,
     status: 'waiting',
-    position: waitingItems.length + 1,
+    position: originalPosition,
     createdAt: new Date(),
+    originalPosition,
   };
   
   addQueueItem(newItem);
   updateQueuePositions();
   
-  return getQueueItemById(newItem.id)!;
+  const finalItem = getQueueItemById(newItem.id)!;
+  
+  if (request.isVip && finalItem.position < originalPosition) {
+    const allWaiting = getQueue().filter(item => item.status === 'waiting');
+    const affectedItems = allWaiting
+      .filter(item => item.id !== newItem.id && item.position > finalItem.position - 1)
+      .map(item => item.id);
+    
+    const insertRecord: InsertRecord = {
+      id: generateId(),
+      ticketId: newItem.id,
+      customerName: newItem.customerName,
+      vipLevel: request.vipLevel || 1,
+      originalPosition,
+      newPosition: finalItem.position,
+      insertTime: new Date(),
+      operator: 'system',
+      affectedTickets: affectedItems,
+      reason: 'VIP会员取号优先排队',
+    };
+    
+    addInsertRecord(insertRecord);
+  }
+  
+  return finalItem;
 }
 
 export function vipInsert(request: VipInsertRequest): {

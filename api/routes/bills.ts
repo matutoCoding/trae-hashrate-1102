@@ -29,13 +29,17 @@ router.post('/from-ticket/:ticketId', (req, res) => {
   const { ticketId } = req.params;
   const { endTime } = req.body;
   
-  const bill = createBillFromTicket(ticketId, endTime ? new Date(endTime) : undefined);
+  const result = createBillFromTicket(ticketId, endTime ? new Date(endTime) : undefined);
   
-  if (!bill) {
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
+  }
+  
+  if (!result.bill) {
     return res.status(400).json({ error: '无法创建账单，请检查票号状态' });
   }
   
-  res.status(201).json({ bill });
+  res.status(201).json({ bill: result.bill });
 });
 
 router.post('/:id/pay', (req, res) => {
@@ -46,13 +50,21 @@ router.post('/:id/pay', (req, res) => {
     return res.status(400).json({ error: '支付方式和金额为必填项' });
   }
   
-  const paid = payBill(id, { paymentMethod, amount });
+  if (amount <= 0) {
+    return res.status(400).json({ error: '支付金额必须大于0' });
+  }
   
-  if (!paid) {
+  const result = payBill(id, { paymentMethod, amount });
+  
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
+  }
+  
+  if (!result.bill) {
     return res.status(404).json({ error: '账单不存在或状态不正确' });
   }
   
-  res.json({ bill: paid, paid: true });
+  res.json({ bill: result.bill, paid: true });
 });
 
 router.post('/:id/refund', (req, res) => {

@@ -7,11 +7,24 @@ function generateId(): string {
   return 'id-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-export function createBillFromTicket(ticketId: string, endTime?: Date): Bill | null {
+export function createBillFromTicket(ticketId: string, endTime?: Date): { bill: Bill | null; error?: string } {
   const queueItem = getQueueItemById(ticketId);
   
-  if (!queueItem || !queueItem.calledAt) {
-    return null;
+  if (!queueItem) {
+    return { bill: null, error: '票号不存在' };
+  }
+  
+  if (queueItem.status !== 'serving') {
+    return { bill: null, error: '该顾客不在服务中，无法结算' };
+  }
+  
+  if (!queueItem.calledAt) {
+    return { bill: null, error: '该顾客尚未开始服务' };
+  }
+  
+  const existingBills = getBills().filter(b => b.ticketId === ticketId);
+  if (existingBills.length > 0) {
+    return { bill: null, error: '该顾客已结算过，请勿重复操作' };
   }
   
   const serviceEndTime = endTime || new Date();
@@ -41,7 +54,7 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): Bill | n
   addBill(bill);
   completeService(ticketId);
   
-  return bill;
+  return { bill };
 }
 
 export function getAllBills(): Bill[] {
@@ -52,21 +65,28 @@ export function getBill(id: string): Bill | undefined {
   return getBillById(id);
 }
 
-export function payBill(id: string, request: PayBillRequest): Bill | null {
+export function payBill(id: string, request: PayBillRequest): { bill: Bill | null; error?: string } {
   const bill = getBillById(id);
   
-  if (!bill || bill.status !== 'pending') {
-    return null;
+  if (!bill) {
+    return { bill: null, error: '账单不存在' };
+  }
+  
+  if (bill.status !== 'pending') {
+    return { bill: null, error: '账单状态不正确，无法支付' };
+  }
+  
+  if (Math.abs(request.amount - bill.finalAmount) > 0.01) {
+    return { bill: null, error: `支付金额与应付金额不符，应付金额为 ¥${bill.finalAmount.toFixed(2)}` };
   }
   
   const updated = updateBill(id, {
     status: 'paid',
     paymentMethod: request.paymentMethod,
     paidAt: new Date(),
-    finalAmount: request.amount,
   });
   
-  return updated || null;
+  return { bill: updated || null };
 }
 
 export function refundBill(id: string): Bill | null {
