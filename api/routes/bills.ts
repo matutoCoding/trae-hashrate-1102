@@ -27,14 +27,18 @@ router.get('/:id', (req, res) => {
 
 router.post('/from-ticket/:ticketId', (req, res) => {
   const { ticketId } = req.params;
-  const { endTime } = req.body;
+  const { endTime, useMembershipDiscount } = req.body;
   
-  const result = createBillFromTicket(ticketId, endTime ? new Date(endTime) : undefined);
+  const result = createBillFromTicket(ticketId, {
+    endTime: endTime ? new Date(endTime) : undefined,
+    useMembershipDiscount: useMembershipDiscount !== false,
+  });
   
   if (result.error) {
     return res.status(400).json({ 
       error: result.error,
-      existingBillId: result.existingBillId
+      existingBillId: result.existingBill?.id,
+      existingBill: result.existingBill,
     });
   }
   

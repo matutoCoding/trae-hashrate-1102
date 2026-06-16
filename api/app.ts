@@ -16,6 +16,8 @@ import queueRoutes from './routes/queue.js'
 import vipRoutes from './routes/vip.js'
 import pricingRoutes from './routes/pricing.js'
 import billsRoutes from './routes/bills.js'
+import membershipRoutes from './routes/membership.js'
+import storeRoutes from './routes/store.js'
 import { loadData } from './store/dataStore.js'
 
 // for esm mode
@@ -41,6 +43,8 @@ app.use('/api/queue', queueRoutes)
 app.use('/api/vip', vipRoutes)
 app.use('/api/pricing', pricingRoutes)
 app.use('/api/bills', billsRoutes)
+app.use('/api/membership', membershipRoutes)
+app.use('/api/store', storeRoutes)
 
 /**
  * health
@@ -59,10 +63,11 @@ app.use(
  * error handler middleware
  */
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('Server Error:', error.message);
   res.status(500).json({
     success: false,
     error: 'Server internal error',
-  })
+  });
 })
 
 /**

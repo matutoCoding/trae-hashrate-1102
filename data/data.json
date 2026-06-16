@@ -444,6 +444,54 @@
         "__type": "Date",
         "value": "2026-06-16T18:32:18.930Z"
       }
+    },
+    {
+      "id": "id-1vv9kd4rpcenyll81c18y",
+      "ticketNumber": 121,
+      "customerName": "张三年卡",
+      "phone": "13888889999",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.188Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.197Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.319Z"
+      }
+    },
+    {
+      "id": "id-sf818nv82nj490xn0bwc",
+      "ticketNumber": 122,
+      "customerName": "张三年卡",
+      "phone": "13936397471",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.495Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.502Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.620Z"
+      }
     }
   ],
   "insertRecords": [
@@ -1127,7 +1175,259 @@
         "value": "2026-06-16T18:32:18.942Z"
       },
       "refundReason": "全额退款测试"
+    },
+    {
+      "id": "id-dx0c0si9njfi8z817x0ky",
+      "ticketId": "id-1vv9kd4rpcenyll81c18y",
+      "customerName": "张三年卡",
+      "phone": "13888889999",
+      "serviceType": "剪发",
+      "isVip": true,
+      "membershipLevel": "gold",
+      "membershipId": "19f56921-4c2f-4fe1-b78d-c11efde60b0b",
+      "discountFromMembership": 3,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.197Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T19:01:11.314Z"
+      },
+      "totalMinutes": 3,
+      "segments": [
+        {
+          "id": "id-e75m4h34avrfouvleak0ro",
+          "periodName": "T全天",
+          "startTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:58:11.197Z"
+          },
+          "endTime": {
+            "__type": "Date",
+            "value": "2026-06-16T19:01:11.314Z"
+          },
+          "durationMinutes": 3,
+          "unitPrice": 10,
+          "subtotal": 30.02
+        }
+      ],
+      "baseAmount": 0,
+      "totalAmount": 30.02,
+      "discountAmount": 3,
+      "finalAmount": 27.02,
+      "status": "paid",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.317Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.328Z"
+      }
+    },
+    {
+      "id": "id-xpgliwjhoulaphuqfj9ngd",
+      "ticketId": "id-sf818nv82nj490xn0bwc",
+      "customerName": "张三年卡",
+      "phone": "13936397471",
+      "serviceType": "剪发",
+      "isVip": true,
+      "membershipLevel": "gold",
+      "membershipId": "043ec2b9-a07b-44ef-908c-1de7b1a14d79",
+      "discountFromMembership": 3,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.502Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T19:02:57.617Z"
+      },
+      "totalMinutes": 3,
+      "segments": [
+        {
+          "id": "id-o4ake0je9imlwax11dg3or",
+          "periodName": "T全天",
+          "startTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:59:57.502Z"
+          },
+          "endTime": {
+            "__type": "Date",
+            "value": "2026-06-16T19:02:57.617Z"
+          },
+          "durationMinutes": 3,
+          "unitPrice": 10,
+          "subtotal": 30.02
+        }
+      ],
+      "baseAmount": 0,
+      "totalAmount": 30.02,
+      "discountAmount": 3,
+      "finalAmount": 27.02,
+      "status": "paid",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.618Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.630Z"
+      }
     }
   ],
-  "ticketCounter": 121
+  "memberships": [
+    {
+      "id": "19f56921-4c2f-4fe1-b78d-c11efde60b0b",
+      "customerName": "张三年卡",
+      "phone": "13888889999",
+      "level": "gold",
+      "cardNumber": "66362911700758",
+      "startDate": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.170Z"
+      },
+      "expiryDate": {
+        "__type": "Date",
+        "value": "2027-09-16T18:58:11.170Z"
+      },
+      "isActive": true,
+      "totalPaid": 4485,
+      "balance": 0,
+      "usedQueueInsertsThisMonth": 0,
+      "lastInsertResetDate": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.170Z"
+      },
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.170Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "043ec2b9-a07b-44ef-908c-1de7b1a14d79",
+      "customerName": "张三年卡",
+      "phone": "13936397471",
+      "level": "gold",
+      "cardNumber": "66363974738758",
+      "startDate": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.472Z"
+      },
+      "expiryDate": {
+        "__type": "Date",
+        "value": "2027-09-16T18:59:57.472Z"
+      },
+      "isActive": true,
+      "totalPaid": 4485,
+      "balance": 0,
+      "usedQueueInsertsThisMonth": 0,
+      "lastInsertResetDate": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.472Z"
+      },
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.472Z"
+      },
+      "storeName": "总店"
+    }
+  ],
+  "membershipRecords": [
+    {
+      "id": "6c1d636d-5c80-46c8-a2ed-0d92ef24c05d",
+      "membershipId": "19f56921-4c2f-4fe1-b78d-c11efde60b0b",
+      "customerName": "张三年卡",
+      "type": "activate",
+      "amount": 3588,
+      "discountApplied": 0,
+      "description": "金卡会员激活办卡，有效期12个月",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.170Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "2e72cf61-24ab-4f80-a3b4-a78049e717a4",
+      "membershipId": "19f56921-4c2f-4fe1-b78d-c11efde60b0b",
+      "customerName": "张三年卡",
+      "type": "consume",
+      "amount": 27.02,
+      "discountApplied": 3,
+      "billId": "id-dx0c0si9njfi8z817x0ky",
+      "ticketId": "id-1vv9kd4rpcenyll81c18y",
+      "description": "金卡会员消费，剪发服务时长3分钟，优惠¥3.00",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.331Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "352bb502-6ad1-413d-a785-0c2e341b30f2",
+      "membershipId": "19f56921-4c2f-4fe1-b78d-c11efde60b0b",
+      "customerName": "张三年卡",
+      "type": "renew",
+      "amount": 897,
+      "discountApplied": 0,
+      "description": "续费3个月，延长至2027-09-16",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:58:11.364Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "03d5bbf0-eddb-479e-8c1c-9a6a6c5c02bc",
+      "membershipId": "043ec2b9-a07b-44ef-908c-1de7b1a14d79",
+      "customerName": "张三年卡",
+      "type": "activate",
+      "amount": 3588,
+      "discountApplied": 0,
+      "description": "金卡会员激活办卡，有效期12个月",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.472Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "72984dad-009b-4330-8d44-58ef35d4235d",
+      "membershipId": "043ec2b9-a07b-44ef-908c-1de7b1a14d79",
+      "customerName": "张三年卡",
+      "type": "consume",
+      "amount": 27.02,
+      "discountApplied": 3,
+      "billId": "id-xpgliwjhoulaphuqfj9ngd",
+      "ticketId": "id-sf818nv82nj490xn0bwc",
+      "description": "金卡会员消费，剪发服务时长3分钟，优惠¥3.00",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.632Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "805a97a5-8d29-4601-8026-bc9da454fd37",
+      "membershipId": "043ec2b9-a07b-44ef-908c-1de7b1a14d79",
+      "customerName": "张三年卡",
+      "type": "renew",
+      "amount": 897,
+      "discountApplied": 0,
+      "description": "续费3个月，延长至2027-09-16",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:59:57.663Z"
+      },
+      "storeName": "总店"
+    }
+  ],
+  "ticketCounter": 123
 }

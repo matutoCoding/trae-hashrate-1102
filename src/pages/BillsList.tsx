@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Receipt, Search, Filter, ChevronDown, Clock, Crown, Undo2, Calendar, PieChart, ArrowRight, X, Store } from 'lucide-react';
+import { Receipt, Search, Filter, ChevronDown, Clock, Crown, Undo2, Calendar, PieChart, ArrowRight, X, Store, Download } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { storeApi } from '../api/client';
 import Modal from '../components/Modal';
 import type { Bill } from '../../shared/types';
 
@@ -15,6 +16,20 @@ export default function BillsList() {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  const handleExport = () => {
+    const params: Parameters<typeof storeApi.exportBills>[0] = {};
+    if (storeFilter !== 'all') params.storeName = storeFilter;
+    if (statusFilter !== 'all') {
+      const st = statusFilter as 'pending' | 'paid' | 'refunded';
+      if (['pending', 'paid', 'refunded'].includes(st)) params.status = st;
+    }
+    if (dateFrom) params.startDate = dateFrom;
+    if (dateTo) params.endDate = dateTo;
+    storeApi.exportBills(params);
+  };
 
   useEffect(() => {
     fetchBills();
@@ -60,8 +75,19 @@ export default function BillsList() {
       bill.ticketId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || bill.status === statusFilter;
     const matchesStore = storeFilter === 'all' || (bill.storeName || '总店') === storeFilter;
-    return matchesSearch && matchesStatus && matchesStore;
-  }), [bills, searchTerm, statusFilter, storeFilter]);
+    let matchesDate = true;
+    if (dateFrom) {
+      const from = new Date(dateFrom);
+      from.setHours(0, 0, 0, 0);
+      if (new Date(bill.createdAt) < from) matchesDate = false;
+    }
+    if (dateTo) {
+      const to = new Date(dateTo);
+      to.setHours(23, 59, 59, 999);
+      if (new Date(bill.createdAt) > to) matchesDate = false;
+    }
+    return matchesSearch && matchesStatus && matchesStore && matchesDate;
+  }), [bills, searchTerm, statusFilter, storeFilter, dateFrom, dateTo]);
 
   const displayBills = useMemo(() => {
     if (storeFilter === 'all') return filteredBills;
@@ -197,29 +223,38 @@ export default function BillsList() {
           </h1>
           <p className="text-barber-silver mt-1">账单汇总与详细记录</p>
         </div>
-        <div className="flex items-center gap-2 bg-barber-darker rounded-xl p-1 border border-barber-gold/20">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              viewMode === 'list' ? 'btn-gold !py-2' : 'text-barber-silver hover:text-barber-cream'
-            }`}
+            onClick={handleExport}
+            className="px-4 py-2 rounded-xl bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 transition-all flex items-center gap-2 text-sm font-medium"
           >
-            <Receipt className="w-4 h-4 inline mr-1" />
-            账单列表
+            <Download className="w-4 h-4" />
+            导出CSV
           </button>
-          <button
-            onClick={() => setViewMode('summary')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              viewMode === 'summary' ? 'btn-gold !py-2' : 'text-barber-silver hover:text-barber-cream'
-            }`}
-          >
-            <PieChart className="w-4 h-4 inline mr-1" />
-            对账汇总
-          </button>
+          <div className="flex items-center gap-2 bg-barber-darker rounded-xl p-1 border border-barber-gold/20">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                viewMode === 'list' ? 'btn-gold !py-2' : 'text-barber-silver hover:text-barber-cream'
+              }`}
+            >
+              <Receipt className="w-4 h-4 inline mr-1" />
+              账单列表
+            </button>
+            <button
+              onClick={() => setViewMode('summary')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                viewMode === 'summary' ? 'btn-gold !py-2' : 'text-barber-silver hover:text-barber-cream'
+              }`}
+            >
+              <PieChart className="w-4 h-4 inline mr-1" />
+              对账汇总
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
           <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-barber-silver" />
           <select
@@ -234,6 +269,24 @@ export default function BillsList() {
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-barber-silver pointer-events-none" />
         </div>
+        <div className="relative">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-barber-silver" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="pl-10 pr-4 py-2.5 rounded-xl bg-barber-darker border border-barber-gold/20 text-barber-cream focus:border-barber-gold focus:outline-none transition-colors"
+            placeholder="开始日期"
+          />
+        </div>
+        <span className="text-barber-silver">至</span>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="pl-4 pr-4 py-2.5 rounded-xl bg-barber-darker border border-barber-gold/20 text-barber-cream focus:border-barber-gold focus:outline-none transition-colors"
+          placeholder="结束日期"
+        />
         <span className="text-sm text-barber-silver">
           {storeFilter === 'all' ? `共 ${storeNames.length} 家门店` : `当前：${storeFilter}`}
         </span>

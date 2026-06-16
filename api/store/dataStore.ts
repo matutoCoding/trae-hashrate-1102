@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import type { QueueItem, InsertRecord, PricingRate, Bill } from '../../shared/types.js';
+import type { QueueItem, InsertRecord, PricingRate, Bill, Membership, MembershipRecord } from '../../shared/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,6 +12,8 @@ interface DataStore {
   insertRecords: InsertRecord[];
   pricingRates: PricingRate[];
   bills: Bill[];
+  memberships: Membership[];
+  membershipRecords: MembershipRecord[];
   ticketCounter: number;
 }
 
@@ -20,6 +22,8 @@ let store: DataStore = {
   insertRecords: [],
   pricingRates: [],
   bills: [],
+  memberships: [],
+  membershipRecords: [],
   ticketCounter: 100,
 };
 
@@ -74,7 +78,18 @@ export function loadData(): void {
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(raw);
-      store = deserializeDates(parsed) as DataStore;
+      const loaded = deserializeDates(parsed) as DataStore;
+      store = {
+        queue: [], insertRecords: [], pricingRates: [], bills: [], memberships: [], membershipRecords: [], ticketCounter: 100,
+        ...loaded,
+      };
+      if (!Array.isArray(store.queue)) store.queue = [];
+      if (!Array.isArray(store.insertRecords)) store.insertRecords = [];
+      if (!Array.isArray(store.pricingRates)) store.pricingRates = [];
+      if (!Array.isArray(store.bills)) store.bills = [];
+      if (!Array.isArray(store.memberships)) store.memberships = [];
+      if (!Array.isArray(store.membershipRecords)) store.membershipRecords = [];
+      if (typeof store.ticketCounter !== 'number') store.ticketCounter = 100;
     } catch (e) {
       console.error('Failed to load data, using defaults', e);
       initDefaultData();
@@ -261,5 +276,54 @@ export function updateQueuePositions(): void {
       queueItem.position = index + 1;
     }
   });
+  saveData();
+}
+
+export function getMemberships(): Membership[] {
+  return [...store.memberships].sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function getActiveMemberships(): Membership[] {
+  return getMemberships().filter(m => m.isActive && new Date(m.expiryDate) >= new Date());
+}
+
+export function getMembershipById(id: string): Membership | undefined {
+  return store.memberships.find(m => m.id === id);
+}
+
+export function getMembershipByPhone(phone: string): Membership | undefined {
+  const active = getActiveMemberships();
+  return active.find(m => m.phone === phone);
+}
+
+export function addMembership(membership: Membership): void {
+  store.memberships.push(membership);
+  saveData();
+}
+
+export function updateMembership(id: string, updates: Partial<Membership>): Membership | undefined {
+  const index = store.memberships.findIndex(m => m.id === id);
+  if (index !== -1) {
+    store.memberships[index] = { ...store.memberships[index], ...updates };
+    saveData();
+    return store.memberships[index];
+  }
+  return undefined;
+}
+
+export function getMembershipRecords(membershipId?: string): MembershipRecord[] {
+  let records = [...store.membershipRecords];
+  if (membershipId) {
+    records = records.filter(r => r.membershipId === membershipId);
+  }
+  return records.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+export function addMembershipRecord(record: MembershipRecord): void {
+  store.membershipRecords.push(record);
   saveData();
 }

@@ -9,6 +9,13 @@ import type {
   CalculatePriceResponse,
   PayBillRequest,
   RefundBillRequest,
+  Membership,
+  MembershipRecord,
+  MembershipLevel,
+  MembershipBenefits,
+  StoreDashboardData,
+  CreateMembershipRequest,
+  CreateBillFromTicketRequest,
 } from '../../shared/types';
 
 const API_BASE = '/api';
@@ -126,10 +133,10 @@ export const billsApi = {
   getBill: (id: string) =>
     request<{ bill: Bill }>(`/bills/${id}`),
 
-  createFromTicket: (ticketId: string, endTime?: Date) =>
-    request<{ bill: Bill; existingBillId?: string }>(`/bills/from-ticket/${ticketId}`, {
+  createFromTicket: (ticketId: string, opts?: CreateBillFromTicketRequest) =>
+    request<{ bill: Bill; existingBillId?: string; existingBill?: Bill }>(`/bills/from-ticket/${ticketId}`, {
       method: 'POST',
-      body: JSON.stringify({ endTime }),
+      body: JSON.stringify({ endTime: opts?.endTime, useMembershipDiscount: opts?.useMembershipDiscount }),
     }),
 
   payBill: (id: string, data: PayBillRequest) =>
@@ -143,4 +150,100 @@ export const billsApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+};
+
+export const membershipApi = {
+  getLevels: () =>
+    request<{
+      levels: Array<{
+        level: MembershipLevel;
+        name: string;
+        benefits: MembershipBenefits;
+        monthlyPrice: number;
+      }>;
+    }>('/membership/levels'),
+
+  getAll: () =>
+    request<{ memberships: Membership[] }>('/membership'),
+
+  getById: (id: string) =>
+    request<{
+      membership: Membership;
+      benefits: MembershipBenefits;
+      remainingInserts: number;
+      records: MembershipRecord[];
+    }>(`/membership/${id}`),
+
+  lookupByPhone: (phone: string) =>
+    request<{
+      membership: Membership;
+      benefits: MembershipBenefits;
+      remainingInserts: number;
+    }>(`/membership/lookup/phone/${encodeURIComponent(phone)}`),
+
+  create: (data: Omit<CreateMembershipRequest, 'startDate'> & { startDate?: Date | string }) =>
+    request<{ membership: Membership }>('/membership', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  renew: (id: string, durationMonths: number, totalPaid: number) =>
+    request<{ membership: Membership }>(`/membership/${id}/renew`, {
+      method: 'POST',
+      body: JSON.stringify({ durationMonths, totalPaid }),
+    }),
+
+  recharge: (id: string, amount: number) =>
+    request<{ membership: Membership }>(`/membership/${id}/recharge`, {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    }),
+
+  deactivate: (id: string, reason?: string) =>
+    request<{ membership: Membership }>(`/membership/${id}/deactivate`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
+  getRecords: (id: string) =>
+    request<{ records: MembershipRecord[] }>(`/membership/${id}/records`),
+};
+
+export const storeApi = {
+  getDashboard: () =>
+    request<StoreDashboardData>('/store/dashboard'),
+
+  getStoreDetail: (storeName: string) =>
+    request<{
+      overview: StoreDashboardData['overview'][number];
+      detail: StoreDashboardData['byStore'][string];
+    }>(`/store/store/${encodeURIComponent(storeName)}`),
+
+  getBillById: (billId: string) =>
+    request<{ bill: Bill }>(`/store/bills/${billId}`),
+
+  getExportUrl: (params: {
+    storeName?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: 'pending' | 'paid' | 'refunded';
+  }) => {
+    const query = new URLSearchParams();
+    if (params.storeName) query.set('storeName', params.storeName);
+    if (params.startDate) query.set('startDate', params.startDate);
+    if (params.endDate) query.set('endDate', params.endDate);
+    if (params.status) query.set('status', params.status);
+    const qs = query.toString();
+    return `/api/store/export${qs ? '?' + qs : ''}`;
+  },
+
+  exportBills: (params: {
+    storeName?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: 'pending' | 'paid' | 'refunded';
+  }) => {
+    const url = storeApi.getExportUrl(params);
+    window.location.href = url;
+  },
 };

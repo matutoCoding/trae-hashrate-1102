@@ -7,13 +7,14 @@ import Toast from '../components/Toast';
 import type { QueueItem, Bill } from '../../shared/types';
 
 export default function QueueManagement() {
-  const { queue, loading, fetchQueue, callNext, callTicket, completeService, cancelTicket, createBillFromTicket, bills } = useStore();
+  const { queue, loading, fetchQueue, callNext, callTicket, completeService, cancelTicket, createBillFromTicket, bills, fetchBills, getBillDetail } = useStore();
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'call' | 'complete' | 'cancel'>('call');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateBill, setDuplicateBill] = useState<Bill | null>(null);
   const [duplicateMessage, setDuplicateMessage] = useState('');
+  const [loadingDuplicateBill, setLoadingDuplicateBill] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
@@ -74,23 +75,34 @@ export default function QueueManagement() {
           break;
         case 'complete': {
           const result = await createBillFromTicket(selectedItem.id);
-          if (result.error && result.existingBillId) {
-            const existing = bills.find(b => b.id === result.existingBillId);
-            if (existing) {
-              setDuplicateBill(existing);
-              setDuplicateMessage(result.error);
-              setShowDuplicateModal(true);
-            } else {
-              showToast('error', result.error);
-            }
-            setShowConfirmModal(false);
-            setSelectedItem(null);
-            return;
-          }
           if (result.error) {
-            showToast('error', result.error);
+            setDuplicateMessage(result.error);
             setShowConfirmModal(false);
             setSelectedItem(null);
+            let foundBill: Bill | undefined | null = result.existingBill;
+            if (!foundBill && result.existingBillId) {
+              foundBill = bills.find(b => b.id === result.existingBillId);
+            }
+            if (foundBill) {
+              setDuplicateBill(foundBill);
+              setShowDuplicateModal(true);
+              return;
+            }
+            if (result.existingBillId) {
+              setLoadingDuplicateBill(true);
+              setShowDuplicateModal(true);
+              try {
+                const fetched = await getBillDetail(result.existingBillId);
+                setDuplicateBill(fetched);
+              } catch {
+                showToast('error', result.error);
+                setShowDuplicateModal(false);
+              } finally {
+                setLoadingDuplicateBill(false);
+              }
+              return;
+            }
+            showToast('error', result.error);
             return;
           }
           showToast('success', '服务完成，账单已生成');
@@ -321,7 +333,14 @@ export default function QueueManagement() {
             </div>
           </div>
 
-          {duplicateBill && (
+          {loadingDuplicateBill && (
+            <div className="flex flex-col items-center justify-center py-12 border border-barber-gold/20 rounded-xl bg-white/5">
+              <div className="w-10 h-10 border-2 border-barber-gold border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-barber-silver text-sm">正在加载账单详情...</p>
+            </div>
+          )}
+
+          {duplicateBill && !loadingDuplicateBill && (
             <div className="border border-barber-gold/20 rounded-xl p-5 bg-white/5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-barber-cream flex items-center gap-2">

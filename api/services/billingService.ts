@@ -1,16 +1,26 @@
 import { getBills, getBillById, addBill, updateBill, getQueueItemById } from '../store/dataStore.js';
 import { calculatePrice } from './pricingService.js';
 import { completeService } from './queueService.js';
-import type { Bill, PayBillRequest } from '../../shared/types.js';
+import {
+  lookupMembershipByPhone,
+  lookupMembershipById,
+  recordMembershipConsumption,
+  recordMembershipRefund,
+  MEMBERSHIP_LEVEL_NAMES,
+} from './membershipService.js';
+import type { Bill, PayBillRequest, CreateBillFromTicketRequest } from '../../shared/types.js';
 
 function generateId(): string {
   return 'id-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-export function createBillFromTicket(ticketId: string, endTime?: Date): { 
+export function createBillFromTicket(
+  ticketId: string,
+  request?: CreateBillFromTicketRequest
+): { 
   bill: Bill | null; 
   error?: string; 
-  existingBillId?: string;
+  existingBill?: Bill;
 } {
   const queueItem = getQueueItemById(ticketId);
   
@@ -24,7 +34,7 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): {
       return { 
         bill: null, 
         error: '该顾客已结算过，请勿重复操作',
-        existingBillId: existingBills[0].id
+        existingBill: existingBills[0],
       };
     }
     if (queueItem.status === 'waiting') {
@@ -48,14 +58,32 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): {
     return { 
       bill: null, 
       error: '该顾客已结算过，请勿重复操作',
-      existingBillId: existingBills[0].id
+      existingBill: existingBills[0],
     };
   }
   
-  const serviceEndTime = endTime || new Date();
+  const serviceEndTime = request?.endTime ? new Date(request.endTime) : new Date();
   const serviceStartTime = new Date(queueItem.calledAt);
   
   const priceResult = calculatePrice(serviceStartTime, serviceEndTime, 0);
+  
+  let membershipLevel;
+  let membershipId;
+  let discountFromMembership = 0;
+  let discountAmount = 0;
+  
+  if (request?.useMembershipDiscount && queueItem.phone) {
+    const mInfo = lookupMembershipByPhone(queueItem.phone);
+    if (mInfo) {
+      membershipLevel = mInfo.membership.level;
+      membershipId = mInfo.membership.id;
+      const rate = mInfo.benefits.discountRate;
+      discountFromMembership = Math.round(priceResult.totalAmount * (1 - rate) * 100) / 100;
+      discountAmount = discountFromMembership;
+    }
+  }
+
+  const finalAmount = Math.max(0, Math.round((priceResult.totalAmount - discountAmount) * 100) / 100);
   
   const bill: Bill = {
     id: generateId(),
@@ -63,15 +91,18 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): {
     customerName: queueItem.customerName,
     phone: queueItem.phone,
     serviceType: queueItem.serviceType,
-    isVip: queueItem.isVip,
+    isVip: queueItem.isVip || !!membershipLevel,
+    membershipLevel,
+    membershipId,
+    discountFromMembership,
     startTime: serviceStartTime,
     endTime: serviceEndTime,
     totalMinutes: priceResult.totalMinutes,
     segments: priceResult.segments,
     baseAmount: 0,
     totalAmount: priceResult.totalAmount,
-    discountAmount: 0,
-    finalAmount: priceResult.totalAmount,
+    discountAmount,
+    finalAmount,
     status: 'pending',
     createdAt: new Date(),
     storeName: queueItem.storeName || '总店',
@@ -111,6 +142,19 @@ export function payBill(id: string, request: PayBillRequest): { bill: Bill | nul
     paymentMethod: request.paymentMethod,
     paidAt: new Date(),
   });
+
+  if (updated && updated.membershipId) {
+    const levelName = updated.membershipLevel ? MEMBERSHIP_LEVEL_NAMES[updated.membershipLevel] : '会员';
+    recordMembershipConsumption({
+      membershipId: updated.membershipId,
+      billId: updated.id,
+      ticketId: updated.ticketId,
+      originalAmount: updated.totalAmount,
+      discountAmount: updated.discountAmount,
+      finalAmount: updated.finalAmount,
+      description: `${levelName}消费，${updated.serviceType}服务时长${updated.totalMinutes}分钟，优惠¥${updated.discountAmount.toFixed(2)}`,
+    });
+  }
   
   return { bill: updated || null };
 }
@@ -138,6 +182,10 @@ export function refundBill(id: string, reason: string): {
     refundedAt: new Date(),
     refundReason: reason.trim(),
   });
+
+  if (updated && updated.membershipId) {
+    recordMembershipRefund(updated.membershipId, updated.id, updated.finalAmount, reason.trim());
+  }
   
   return { bill: updated || null };
 }

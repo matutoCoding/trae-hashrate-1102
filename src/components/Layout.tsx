@@ -1,13 +1,15 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Scissors, Users, Crown, DollarSign, Receipt, Settings } from 'lucide-react';
+import { Scissors, Users, Crown, DollarSign, Receipt, Settings, CreditCard, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { path: '/', label: '叫号主页', icon: Scissors },
   { path: '/queue', label: '排队管理', icon: Users },
   { path: '/vip', label: 'VIP插队', icon: Crown },
+  { path: '/membership', label: '会员管理', icon: CreditCard },
   { path: '/pricing', label: '费率设置', icon: DollarSign },
   { path: '/billing', label: '账单结算', icon: Receipt },
-  { path: '/bills', label: '账单列表', icon: Receipt },
+  { path: '/bills', label: '对账汇总', icon: Receipt },
+  { path: '/dashboard', label: '门店看板', icon: BarChart3 },
 ];
 
 export default function Layout() {
