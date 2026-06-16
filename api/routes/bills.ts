@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getAllBills, getBill, payBill, refundBill, createBillFromTicket, getBillsStats } from '../services/billingService.js';
-import type { PayBillRequest } from '../../shared/types.js';
+import type { PayBillRequest, RefundBillRequest } from '../../shared/types.js';
 
 const router = Router();
 
@@ -32,7 +32,10 @@ router.post('/from-ticket/:ticketId', (req, res) => {
   const result = createBillFromTicket(ticketId, endTime ? new Date(endTime) : undefined);
   
   if (result.error) {
-    return res.status(400).json({ error: result.error });
+    return res.status(400).json({ 
+      error: result.error,
+      existingBillId: result.existingBillId
+    });
   }
   
   if (!result.bill) {
@@ -69,14 +72,19 @@ router.post('/:id/pay', (req, res) => {
 
 router.post('/:id/refund', (req, res) => {
   const { id } = req.params;
+  const { reason } = req.body as RefundBillRequest;
   
-  const refunded = refundBill(id);
+  const result = refundBill(id, reason || '');
   
-  if (!refunded) {
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
+  }
+  
+  if (!result.bill) {
     return res.status(404).json({ error: '账单不存在或状态不正确' });
   }
   
-  res.json({ bill: refunded, refunded: true });
+  res.json({ bill: result.bill, refunded: true });
 });
 
 export default router;

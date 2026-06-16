@@ -8,6 +8,7 @@ import type {
   VipInsertRequest,
   CalculatePriceResponse,
   PayBillRequest,
+  RefundBillRequest,
 } from '../../shared/types';
 
 const API_BASE = '/api';
@@ -124,7 +125,7 @@ export const billsApi = {
     request<{ bill: Bill }>(`/bills/${id}`),
 
   createFromTicket: (ticketId: string, endTime?: Date) =>
-    request<{ bill: Bill }>(`/bills/from-ticket/${ticketId}`, {
+    request<{ bill: Bill; existingBillId?: string }>(`/bills/from-ticket/${ticketId}`, {
       method: 'POST',
       body: JSON.stringify({ endTime }),
     }),
@@ -135,8 +136,9 @@ export const billsApi = {
       body: JSON.stringify(data),
     }),
 
-  refundBill: (id: string) =>
+  refundBill: (id: string, data: RefundBillRequest) =>
     request<{ bill: Bill; refunded: boolean }>(`/bills/${id}/refund`, {
       method: 'POST',
+      body: JSON.stringify(data),
     }),
 };

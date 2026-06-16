@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Receipt, Clock, DollarSign, CreditCard, QrCode, CheckCircle } from 'lucide-react';
+import { Receipt, Clock, DollarSign, CreditCard, QrCode, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import Modal from '../components/Modal';
+import Toast from '../components/Toast';
 import type { Bill, QueueItem } from '../../shared/types';
 
 const paymentMethods = [
@@ -18,6 +19,9 @@ export default function Billing() {
   const [showPayModal, setShowPayModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState('wechat');
   const [paySuccess, setPaySuccess] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<{ message: string; billId: string } | null>(null);
 
   useEffect(() => {
     fetchQueue();
@@ -26,17 +30,40 @@ export default function Billing() {
 
   const servingItems = queue.filter(item => item.status === 'serving');
 
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleGenerateBill = async (ticket: QueueItem) => {
     try {
-      const bill = await createBillFromTicket(ticket.id);
-      if (bill) {
-        setCurrentBill(bill);
+      const result = await createBillFromTicket(ticket.id);
+      if (result.error && result.existingBillId) {
+        setDuplicateInfo({ message: result.error, billId: result.existingBillId });
+        setShowDuplicateModal(true);
+        const existingBill = bills.find(b => b.id === result.existingBillId);
+        if (existingBill) {
+          setCurrentBill(existingBill);
+          setSelectedTicket(ticket);
+        }
+        return;
+      }
+      if (result.error) {
+        showToast('error', result.error);
+        return;
+      }
+      if (result.bill) {
+        setCurrentBill(result.bill);
         setSelectedTicket(ticket);
+        showToast('success', '账单生成成功');
       }
     } catch (e) {
+      showToast('error', '生成账单失败');
       console.error('生成账单失败', e);
     }
   };
+
+  const duplicateBill = duplicateInfo ? bills.find(b => b.id === duplicateInfo.billId) : null;
 
   const handlePay = async () => {
     if (!currentBill) return;
@@ -46,6 +73,7 @@ export default function Billing() {
       if (paidBill) {
         setCurrentBill(paidBill);
         setPaySuccess(true);
+        showToast('success', '支付成功');
         setTimeout(() => {
           setShowPayModal(false);
           setPaySuccess(false);
@@ -54,6 +82,7 @@ export default function Billing() {
         }, 2000);
       }
     } catch (e) {
+      showToast('error', '支付失败');
       console.error('支付失败', e);
     }
   };
@@ -75,6 +104,8 @@ export default function Billing() {
 
   return (
     <div className="space-y-6">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
       <div>
         <h1 className="font-display text-3xl font-bold text-barber-cream">
           账单结算
@@ -334,6 +365,74 @@ export default function Billing() {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={showDuplicateModal}
+        onClose={() => {
+          setShowDuplicateModal(false);
+          setDuplicateInfo(null);
+        }}
+        title="提示：该顾客已结算"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/30">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-amber-400 font-medium">已生成账单</p>
+                <p className="text-sm text-barber-silver mt-1">{duplicateInfo?.message}</p>
+              </div>
+            </div>
+          </div>
+
+          {duplicateBill && (
+            <div className="glass-card p-4">
+              <p className="text-xs text-barber-silver mb-2">已存在的账单</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">顾客：</span>
+                  <span className="text-barber-cream font-medium">{duplicateBill.customerName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">金额：</span>
+                  <span className="text-barber-gold font-bold">¥{duplicateBill.finalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">状态：</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    duplicateBill.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
+                    duplicateBill.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {duplicateBill.status === 'pending' ? '待支付' :
+                     duplicateBill.status === 'paid' ? '已支付' : '已退款'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-barber-silver">
+            已自动为您打开该账单，您可以直接查看或继续支付。
+          </p>
+
+          <div className="pt-2">
+            <button
+              onClick={() => {
+                setShowDuplicateModal(false);
+                setDuplicateInfo(null);
+              }}
+              className="w-full btn-gold flex items-center justify-center gap-1"
+            >
+              查看账单详情
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

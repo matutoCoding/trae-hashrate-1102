@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { vipInsert, getAllInsertRecords } from '../services/queueService.js';
+import { vipInsert, getAllInsertRecordsWithDetails } from '../services/queueService.js';
 import type { VipInsertRequest } from '../../shared/types.js';
 
 const router = Router();
@@ -23,7 +23,7 @@ router.post('/insert', (req, res) => {
 });
 
 router.get('/records', (_req, res) => {
-  const records = getAllInsertRecords();
+  const records = getAllInsertRecordsWithDetails();
   res.json({ records });
 });
 

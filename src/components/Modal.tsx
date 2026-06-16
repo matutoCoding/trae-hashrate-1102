@@ -6,9 +6,16 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+const sizeClasses = {
+  sm: 'max-w-md',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+};
+
+export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -17,7 +24,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative glass-card w-full max-w-md p-6 animate-slide-up">
+      <div className={`relative glass-card w-full ${sizeClasses[size]} p-6 animate-slide-up max-h-[90vh] overflow-y-auto scrollbar-thin`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-xl font-bold text-barber-cream">
             {title}

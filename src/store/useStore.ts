@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import type { QueueItem, InsertRecord, PricingRate, Bill, BillingSegment } from '../../shared/types';
 import { queueApi, vipApi, pricingApi, billsApi } from '../api/client';
 
+interface CreateBillResult {
+  bill: Bill | null;
+  error?: string;
+  existingBillId?: string;
+}
+
 interface AppState {
   queue: QueueItem[];
   insertRecords: InsertRecord[];
@@ -41,8 +47,9 @@ interface AppState {
   completeService: (ticketId: string) => Promise<QueueItem | null>;
   cancelTicket: (ticketId: string) => Promise<QueueItem | null>;
 
-  createBillFromTicket: (ticketId: string, endTime?: Date) => Promise<Bill | null>;
+  createBillFromTicket: (ticketId: string, endTime?: Date) => Promise<CreateBillResult>;
   payBill: (billId: string, paymentMethod: string, amount: number) => Promise<Bill | null>;
+  refundBill: (billId: string, reason: string) => Promise<Bill | null>;
 
   updateRate: (id: string, updates: Partial<PricingRate>) => Promise<void>;
   createRate: (rate: Omit<PricingRate, 'id'>) => Promise<void>;
@@ -196,13 +203,16 @@ export const useStore = create<AppState>((set, get) => ({
   createBillFromTicket: async (ticketId: string, endTime?: Date) => {
     set({ loading: true, error: null });
     try {
-      const { bill } = await billsApi.createFromTicket(ticketId, endTime);
+      const result = await billsApi.createFromTicket(ticketId, endTime);
       await get().fetchBills();
       await get().fetchQueue();
-      return bill;
+      return { bill: result.bill };
     } catch (e) {
-      set({ error: (e as Error).message });
-      throw e;
+      const err = e as any;
+      const errorMsg = err?.response?.data?.error || err.message;
+      const existingBillId = err?.response?.data?.existingBillId;
+      set({ error: errorMsg });
+      return { bill: null, error: errorMsg, existingBillId };
     } finally {
       set({ loading: false });
     }
@@ -212,6 +222,20 @@ export const useStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const { bill } = await billsApi.payBill(billId, { paymentMethod, amount });
+      await get().fetchBills();
+      return bill;
+    } catch (e) {
+      set({ error: (e as Error).message });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  refundBill: async (billId: string, reason: string) => {
+    set({ loading: true, error: null });
+    try {
+      const { bill } = await billsApi.refundBill(billId, { reason });
       await get().fetchBills();
       return bill;
     } catch (e) {

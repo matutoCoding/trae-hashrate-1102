@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Play, Square, X, Clock, Users } from 'lucide-react';
+import { Play, Square, X, Clock, Users, AlertTriangle, ArrowRight, Receipt } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import QueueCard from '../components/QueueCard';
 import Modal from '../components/Modal';
+import Toast from '../components/Toast';
 import type { QueueItem } from '../../shared/types';
 
 export default function QueueManagement() {
-  const { queue, loading, fetchQueue, callNext, callTicket, completeService, cancelTicket } = useStore();
+  const { queue, loading, fetchQueue, callNext, callTicket, completeService, cancelTicket, createBillFromTicket, bills } = useStore();
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'call' | 'complete' | 'cancel'>('call');
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateBillId, setDuplicateBillId] = useState<string | null>(null);
+  const [duplicateMessage, setDuplicateMessage] = useState('');
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     fetchQueue();
@@ -21,10 +26,17 @@ export default function QueueManagement() {
   const servingQueue = queue.filter(item => item.status === 'serving');
   const completedQueue = queue.filter(item => item.status === 'completed' || item.status === 'cancelled').slice(0, 10);
 
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleCallNext = async () => {
     try {
       await callNext();
+      showToast('success', '叫号成功');
     } catch (e) {
+      showToast('error', '叫号失败');
       console.error('叫号失败', e);
     }
   };
@@ -42,19 +54,44 @@ export default function QueueManagement() {
       switch (confirmAction) {
         case 'call':
           await callTicket(selectedItem.id);
+          showToast('success', '叫号成功');
           break;
-        case 'complete':
-          await completeService(selectedItem.id);
+        case 'complete': {
+          const result = await createBillFromTicket(selectedItem.id);
+          if (result.error && result.existingBillId) {
+            setDuplicateBillId(result.existingBillId);
+            setDuplicateMessage(result.error);
+            setShowDuplicateModal(true);
+            setShowConfirmModal(false);
+            setSelectedItem(null);
+            return;
+          }
+          if (result.error) {
+            showToast('error', result.error);
+            setShowConfirmModal(false);
+            setSelectedItem(null);
+            return;
+          }
+          showToast('success', '服务完成，账单已生成');
           break;
+        }
         case 'cancel':
           await cancelTicket(selectedItem.id);
+          showToast('success', '取消排队成功');
           break;
       }
       setShowConfirmModal(false);
       setSelectedItem(null);
     } catch (e) {
+      showToast('error', '操作失败');
       console.error('操作失败', e);
     }
+  };
+
+  const goToBill = () => {
+    setShowDuplicateModal(false);
+    setDuplicateBillId(null);
+    window.dispatchEvent(new CustomEvent('navigate', { detail: { path: '/bills', billId: duplicateBillId } }));
   };
 
   const actionLabels = {
@@ -63,8 +100,12 @@ export default function QueueManagement() {
     cancel: '取消排队',
   };
 
+  const duplicateBill = duplicateBillId ? bills.find(b => b.id === duplicateBillId) : null;
+
   return (
     <div className="space-y-6">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-3xl font-bold text-barber-cream">
@@ -234,6 +275,81 @@ export default function QueueManagement() {
               className="flex-1 btn-gold"
             >
               确认
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showDuplicateModal}
+        onClose={() => {
+          setShowDuplicateModal(false);
+          setDuplicateBillId(null);
+        }}
+        title="重复结算提示"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/30">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-amber-400 font-medium">无法重复结算</p>
+                <p className="text-sm text-barber-silver mt-1">{duplicateMessage}</p>
+              </div>
+            </div>
+          </div>
+
+          {duplicateBill && (
+            <div className="glass-card p-4">
+              <p className="text-xs text-barber-silver mb-2">已有账单信息</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">顾客：</span>
+                  <span className="text-barber-cream font-medium">{duplicateBill.customerName}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">服务项目：</span>
+                  <span className="text-barber-cream">{duplicateBill.serviceType}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">金额：</span>
+                  <span className="text-barber-gold font-bold">¥{duplicateBill.finalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-barber-silver text-sm">状态：</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    duplicateBill.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
+                    duplicateBill.status === 'paid' ? 'bg-green-500/20 text-green-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {duplicateBill.status === 'pending' ? '待支付' :
+                     duplicateBill.status === 'paid' ? '已支付' : '已退款'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => {
+                setShowDuplicateModal(false);
+                setDuplicateBillId(null);
+              }}
+              className="flex-1 btn-secondary"
+            >
+              知道了
+            </button>
+            <button
+              onClick={goToBill}
+              className="flex-1 btn-gold flex items-center justify-center gap-1"
+            >
+              <Receipt className="w-4 h-4" />
+              查看原账单
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

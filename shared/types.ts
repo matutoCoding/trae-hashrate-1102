@@ -66,6 +66,8 @@ export interface Bill {
   status: 'pending' | 'paid' | 'refunded';
   paymentMethod?: string;
   paidAt?: Date;
+  refundedAt?: Date;
+  refundReason?: string;
   createdAt: Date;
 }
 
@@ -100,4 +102,16 @@ export interface CalculatePriceResponse {
 export interface PayBillRequest {
   paymentMethod: string;
   amount: number;
+}
+
+export interface RefundBillRequest {
+  reason: string;
+}
+
+export interface AffectedTicketInfo {
+  ticketId: string;
+  ticketNumber: number;
+  customerName: string;
+  originalPosition: number;
+  newPosition: number;
 }

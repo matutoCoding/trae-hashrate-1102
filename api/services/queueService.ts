@@ -227,3 +227,40 @@ export function cancelTicket(ticketId: string): QueueItem | null {
 export function getAllInsertRecords(): InsertRecord[] {
   return getInsertRecords();
 }
+
+export interface InsertRecordWithDetails extends InsertRecord {
+  affectedCustomers: {
+    ticketId: string;
+    ticketNumber: number;
+    customerName: string;
+    originalPosition: number;
+    newPosition: number;
+  }[];
+  vipTicketNumber: number;
+}
+
+export function getAllInsertRecordsWithDetails(): InsertRecordWithDetails[] {
+  const records = getInsertRecords();
+  const allQueueItems = getAllQueueItemsFromStore();
+  
+  return records.map(record => {
+    const vipItem = allQueueItems.find(item => item.id === record.ticketId);
+    
+    const affectedCustomers = record.affectedTickets.map((ticketId, idx) => {
+      const item = allQueueItems.find(i => i.id === ticketId);
+      return {
+        ticketId,
+        ticketNumber: item?.ticketNumber || 0,
+        customerName: item?.customerName || '未知顾客',
+        originalPosition: record.newPosition + idx,
+        newPosition: record.newPosition + idx + 1,
+      };
+    });
+    
+    return {
+      ...record,
+      vipTicketNumber: vipItem?.ticketNumber || 0,
+      affectedCustomers,
+    };
+  });
+}

@@ -180,6 +180,30 @@
         "value": "2026-06-16T17:42:26.222Z"
       },
       "originalPosition": 6
+    },
+    {
+      "id": "id-z3t02h0ctxf79b3awb2d5",
+      "ticketNumber": 110,
+      "customerName": "??VIP??",
+      "phone": "13800000088",
+      "serviceType": "??",
+      "isVip": true,
+      "vipLevel": 2,
+      "status": "completed",
+      "position": 1,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:44.246Z"
+      },
+      "originalPosition": 6,
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:45.298Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:46.314Z"
+      }
     }
   ],
   "insertRecords": [
@@ -230,6 +254,27 @@
       "insertTime": {
         "__type": "Date",
         "value": "2026-06-16T17:41:00.294Z"
+      },
+      "operator": "system",
+      "affectedTickets": [
+        "id-pkbd9bpuwr1qct6yjjaeq",
+        "id-pl2e5pprp2cgs0yuo2ofq",
+        "id-82n5a0yv07padx8xewnog4",
+        "id-43uhhyr3xl8x81ayd9paa",
+        "id-93m00mi0pl5c7dx24z9d0a"
+      ],
+      "reason": "VIP会员取号优先排队"
+    },
+    {
+      "id": "id-ppbkzvvbwj4ewimlr0w7q",
+      "ticketId": "id-z3t02h0ctxf79b3awb2d5",
+      "customerName": "??VIP??",
+      "vipLevel": 2,
+      "originalPosition": 6,
+      "newPosition": 1,
+      "insertTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:44.250Z"
       },
       "operator": "system",
       "affectedTickets": [
@@ -328,7 +373,7 @@
       "totalAmount": 0,
       "discountAmount": 0,
       "finalAmount": 0,
-      "status": "paid",
+      "status": "refunded",
       "createdAt": {
         "__type": "Date",
         "value": "2026-06-16T17:27:29.989Z"
@@ -337,7 +382,12 @@
       "paidAt": {
         "__type": "Date",
         "value": "2026-06-16T17:27:57.825Z"
-      }
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:12:29.497Z"
+      },
+      "refundReason": "顾客不满意，服务质量问题 - 自动化测试退款"
     },
     {
       "id": "id-sj3gigu91nby9dyxk8w8l",
@@ -392,7 +442,34 @@
         "__type": "Date",
         "value": "2026-06-16T17:42:04.043Z"
       }
+    },
+    {
+      "id": "id-zy7j8zkpzfg51zbrclzfm",
+      "ticketId": "id-z3t02h0ctxf79b3awb2d5",
+      "customerName": "??VIP??",
+      "phone": "13800000088",
+      "serviceType": "??",
+      "isVip": true,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:45.298Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:46.311Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "pending",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:06:46.312Z"
+      }
     }
   ],
-  "ticketCounter": 110
+  "ticketCounter": 111
 }

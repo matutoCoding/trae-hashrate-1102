@@ -7,7 +7,11 @@ function generateId(): string {
   return 'id-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-export function createBillFromTicket(ticketId: string, endTime?: Date): { bill: Bill | null; error?: string } {
+export function createBillFromTicket(ticketId: string, endTime?: Date): { 
+  bill: Bill | null; 
+  error?: string; 
+  existingBillId?: string;
+} {
   const queueItem = getQueueItemById(ticketId);
   
   if (!queueItem) {
@@ -15,6 +19,23 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): { bill: 
   }
   
   if (queueItem.status !== 'serving') {
+    const existingBills = getBills().filter(b => b.ticketId === ticketId);
+    if (existingBills.length > 0) {
+      return { 
+        bill: null, 
+        error: '该顾客已结算过，请勿重复操作',
+        existingBillId: existingBills[0].id
+      };
+    }
+    if (queueItem.status === 'waiting') {
+      return { bill: null, error: '该顾客尚未开始服务，请先叫号' };
+    }
+    if (queueItem.status === 'completed') {
+      return { bill: null, error: '该顾客已完成服务' };
+    }
+    if (queueItem.status === 'cancelled') {
+      return { bill: null, error: '该顾客已取消排队' };
+    }
     return { bill: null, error: '该顾客不在服务中，无法结算' };
   }
   
@@ -24,7 +45,11 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): { bill: 
   
   const existingBills = getBills().filter(b => b.ticketId === ticketId);
   if (existingBills.length > 0) {
-    return { bill: null, error: '该顾客已结算过，请勿重复操作' };
+    return { 
+      bill: null, 
+      error: '该顾客已结算过，请勿重复操作',
+      existingBillId: existingBills[0].id
+    };
   }
   
   const serviceEndTime = endTime || new Date();
@@ -89,18 +114,31 @@ export function payBill(id: string, request: PayBillRequest): { bill: Bill | nul
   return { bill: updated || null };
 }
 
-export function refundBill(id: string): Bill | null {
+export function refundBill(id: string, reason: string): { 
+  bill: Bill | null; 
+  error?: string;
+} {
   const bill = getBillById(id);
   
-  if (!bill || bill.status !== 'paid') {
-    return null;
+  if (!bill) {
+    return { bill: null, error: '账单不存在' };
+  }
+  
+  if (bill.status !== 'paid') {
+    return { bill: null, error: '只有已支付的账单才能退款' };
+  }
+  
+  if (!reason || !reason.trim()) {
+    return { bill: null, error: '请填写退款原因' };
   }
   
   const updated = updateBill(id, {
     status: 'refunded',
+    refundedAt: new Date(),
+    refundReason: reason.trim(),
   });
   
-  return updated || null;
+  return { bill: updated || null };
 }
 
 export function getBillsStats() {
@@ -113,19 +151,33 @@ export function getBillsStats() {
     return billDate >= today;
   });
   
-  const totalRevenue = bills
+  const totalPaid = bills
     .filter(bill => bill.status === 'paid')
     .reduce((sum, bill) => sum + bill.finalAmount, 0);
+  
+  const totalRefunded = bills
+    .filter(bill => bill.status === 'refunded')
+    .reduce((sum, bill) => sum + bill.finalAmount, 0);
+  
+  const todayPaid = todayBills
+    .filter(b => b.status === 'paid')
+    .reduce((sum, b) => sum + b.finalAmount, 0);
+  
+  const todayRefunded = todayBills
+    .filter(b => b.status === 'refunded')
+    .reduce((sum, b) => sum + b.finalAmount, 0);
   
   return {
     totalBills: bills.length,
     paidBills: bills.filter(b => b.status === 'paid').length,
-    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    pendingBills: bills.filter(b => b.status === 'pending').length,
+    refundedBills: bills.filter(b => b.status === 'refunded').length,
+    totalRevenue: Math.round(totalPaid * 100) / 100,
+    totalNetRevenue: Math.round((totalPaid - totalRefunded) * 100) / 100,
+    totalRefunded: Math.round(totalRefunded * 100) / 100,
     todayBills: todayBills.length,
-    todayRevenue: Math.round(
-      todayBills
-        .filter(b => b.status === 'paid')
-        .reduce((sum, b) => sum + b.finalAmount, 0
-      ) * 100) / 100,
+    todayRevenue: Math.round(todayPaid * 100) / 100,
+    todayNetRevenue: Math.round((todayPaid - todayRefunded) * 100) / 100,
+    todayRefunded: Math.round(todayRefunded * 100) / 100,
   };
 }
