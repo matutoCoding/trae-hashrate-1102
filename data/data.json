@@ -1,0 +1,246 @@
+{
+  "queue": [
+    {
+      "id": "id-8zo317d7mligk37g8uzu",
+      "ticketNumber": 100,
+      "customerName": "张三",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 1,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:01:14.749Z"
+      },
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:04:11.798Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:10:01.034Z"
+      }
+    },
+    {
+      "id": "id-pkbd9bpuwr1qct6yjjaeq",
+      "ticketNumber": 101,
+      "customerName": "李四",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "waiting",
+      "position": 2,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:05:29.096Z"
+      }
+    },
+    {
+      "id": "id-pl2e5pprp2cgs0yuo2ofq",
+      "ticketNumber": 102,
+      "customerName": "王五",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "waiting",
+      "position": 3,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:06:14.721Z"
+      }
+    },
+    {
+      "id": "id-xvyovmrx0na45tcqbwv1lx",
+      "ticketNumber": 103,
+      "customerName": "赵六",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "vipLevel": 2,
+      "status": "completed",
+      "position": 1,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:07:17.003Z"
+      },
+      "originalPosition": 3,
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:08.159Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:29.991Z"
+      }
+    },
+    {
+      "id": "id-82n5a0yv07padx8xewnog4",
+      "ticketNumber": 104,
+      "customerName": "测试顾客",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "waiting",
+      "position": 4,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:24:04.046Z"
+      }
+    },
+    {
+      "id": "id-dv99yi5h8rimwxqkowdmp",
+      "ticketNumber": 105,
+      "customerName": "VIP测试",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "vipLevel": 2,
+      "status": "waiting",
+      "position": 1,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:29:28.566Z"
+      },
+      "originalPosition": 4
+    }
+  ],
+  "insertRecords": [
+    {
+      "id": "id-csgit4xwn4lzjjb2xfjg28",
+      "ticketId": "id-xvyovmrx0na45tcqbwv1lx",
+      "customerName": "赵六",
+      "vipLevel": 2,
+      "originalPosition": 3,
+      "newPosition": 1,
+      "insertTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:07:17.005Z"
+      },
+      "operator": "system",
+      "affectedTickets": [
+        "id-pkbd9bpuwr1qct6yjjaeq",
+        "id-pl2e5pprp2cgs0yuo2ofq"
+      ],
+      "reason": "年卡会员"
+    },
+    {
+      "id": "id-0lwdd3qpcb2gpzygxtcjlks",
+      "ticketId": "id-dv99yi5h8rimwxqkowdmp",
+      "customerName": "VIP测试",
+      "vipLevel": 2,
+      "originalPosition": 4,
+      "newPosition": 1,
+      "insertTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:29:28.573Z"
+      },
+      "operator": "system",
+      "affectedTickets": [
+        "id-pkbd9bpuwr1qct6yjjaeq",
+        "id-pl2e5pprp2cgs0yuo2ofq",
+        "id-82n5a0yv07padx8xewnog4"
+      ],
+      "reason": "年卡会员优先"
+    }
+  ],
+  "pricingRates": [
+    {
+      "id": "rate-1",
+      "name": "工作日白天",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "pricePerMinute": 1.5,
+      "dayType": "weekday",
+      "isActive": true,
+      "sortOrder": 1
+    },
+    {
+      "id": "rate-2",
+      "name": "工作日晚高峰",
+      "startTime": "17:00",
+      "endTime": "21:00",
+      "pricePerMinute": 2.5,
+      "dayType": "weekday",
+      "isActive": true,
+      "sortOrder": 2
+    },
+    {
+      "id": "rate-3",
+      "name": "周末全天",
+      "startTime": "09:00",
+      "endTime": "21:00",
+      "pricePerMinute": 3,
+      "dayType": "weekend",
+      "isActive": true,
+      "sortOrder": 1
+    }
+  ],
+  "bills": [
+    {
+      "id": "id-8jl6j4ojmfrgy6dnol5x4",
+      "ticketId": "id-8zo317d7mligk37g8uzu",
+      "customerName": "张三",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:04:11.798Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:10:01.031Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "paid",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:10:01.032Z"
+      },
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:23:06.911Z"
+      }
+    },
+    {
+      "id": "id-y86173r0ca8gdptyv41p34",
+      "ticketId": "id-xvyovmrx0na45tcqbwv1lx",
+      "customerName": "赵六",
+      "phone": "",
+      "serviceType": "剪发",
+      "isVip": true,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:08.159Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:29.989Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "paid",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:29.989Z"
+      },
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T17:27:57.825Z"
+      }
+    }
+  ],
+  "ticketCounter": 106
+}
