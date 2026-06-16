@@ -23,7 +23,7 @@ router.get('/stats', (_req, res) => {
 });
 
 router.post('/ticket', (req, res) => {
-  const { customerName, phone, serviceType, isVip, vipLevel } = req.body as CreateTicketRequest;
+  const { customerName, phone, serviceType, isVip, vipLevel, storeName } = req.body as CreateTicketRequest;
   
   if (!customerName || !serviceType) {
     return res.status(400).json({ error: '顾客姓名和服务类型为必填项' });
@@ -35,6 +35,7 @@ router.post('/ticket', (req, res) => {
     serviceType,
     isVip: isVip || false,
     vipLevel,
+    storeName,
   });
   
   res.status(201).json({ ticket });

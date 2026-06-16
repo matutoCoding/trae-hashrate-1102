@@ -12,6 +12,7 @@ export interface QueueItem {
   calledAt?: Date;
   completedAt?: Date;
   originalPosition?: number;
+  storeName?: string;
 }
 
 export interface InsertRecord {
@@ -69,6 +70,7 @@ export interface Bill {
   refundedAt?: Date;
   refundReason?: string;
   createdAt: Date;
+  storeName?: string;
 }
 
 export interface CreateTicketRequest {
@@ -77,6 +79,7 @@ export interface CreateTicketRequest {
   serviceType: string;
   isVip: boolean;
   vipLevel?: number;
+  storeName?: string;
 }
 
 export interface VipInsertRequest {

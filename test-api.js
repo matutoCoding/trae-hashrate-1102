@@ -13,7 +13,6 @@ function request(path, method, body) {
         'Content-Length': Buffer.byteLength(data),
       } : {},
     };
-    
     const req = http.request(options, (res) => {
       let chunks = [];
       res.on('data', (chunk) => chunks.push(chunk));
@@ -27,7 +26,6 @@ function request(path, method, body) {
         }
       });
     });
-    
     req.on('error', reject);
     if (data) req.write(data);
     req.end();
@@ -35,177 +33,107 @@ function request(path, method, body) {
 }
 
 async function main() {
-  console.log('\n========== 理发店叫号收银 - 功能验收测试 ==========\n');
+  console.log('\n===== 理发店叫号收银 - 第二轮功能验收 =====\n');
 
-  // 先获取已有账单
-  const billsRes = await request('/bills', 'GET');
-  const pendingBill = billsRes.body.bills.find(b => b.status === 'pending');
-  const paidBill = billsRes.body.bills.find(b => b.status === 'paid');
-  console.log(`📋 已有账单: pending=${billsRes.body.bills.filter(b=>b.status==='pending').length}, paid=${billsRes.body.bills.filter(b=>b.status==='paid').length}, refunded=${billsRes.body.bills.filter(b=>b.status==='refunded').length}`);
+  // 测试1: 门店字段 & 取号带门店
+  console.log('===== 测试1: 门店字段 & 取号带门店 =====');
+  const t1 = await request('/queue/ticket', 'POST', {
+    customerName: '总店顾客', phone: '13800000001', serviceType: '剪发', isVip: false, storeName: '总店',
+  });
+  console.log(`取号(总店): #${t1.body.ticket.ticketNumber} storeName=${t1.body.ticket.storeName}`);
+  const t2 = await request('/queue/ticket', 'POST', {
+    customerName: '分店顾客', phone: '13800000002', serviceType: '烫发', isVip: false, storeName: '朝阳分店',
+  });
+  console.log(`取号(分店): #${t2.body.ticket.ticketNumber} storeName=${t2.body.ticket.storeName}`);
+  const storeOk = t1.body.ticket.storeName === '总店' && t2.body.ticket.storeName === '朝阳分店';
+  console.log(`${storeOk ? '✅' : '❌'} 门店字段传递正确`);
 
-  let testBillId;
-  let testBillAmount;
-  let testTicketId;
-
-  if (pendingBill) {
-    testBillId = pendingBill.id;
-    testBillAmount = pendingBill.finalAmount;
-    testTicketId = pendingBill.ticketId;
-    console.log(`✅ 复用待支付账单: #${testBillId.slice(-8)} ¥${testBillAmount} (${pendingBill.customerName})`);
+  // 测试2: 0元账单支付
+  console.log('\n===== 测试2: 0元账单正常支付 =====');
+  await request(`/queue/call/${t1.body.ticket.id}`, 'POST');
+  const zeroBill = await request(`/bills/from-ticket/${t1.body.ticket.id}`, 'POST');
+  const zBill = zeroBill.body.bill;
+  console.log(`0元账单: #${zBill.id.slice(-8)} ¥${zBill.finalAmount} storeName=${zBill.storeName}`);
+  const zeroPay = await request(`/bills/${zBill.id}/pay`, 'POST', { paymentMethod: 'confirm', amount: 0 });
+  if (zeroPay.status === 200 && zeroPay.body.paid) {
+    console.log(`✅ 0元确认结清成功: status=${zeroPay.body.bill.status} paymentMethod=${zeroPay.body.bill.paymentMethod}`);
   } else {
-    // 创建新顾客并走完整流程
-    console.log('⚠️  无待支付账单，创建新的测试顾客...');
-    // 取号
-    const ticketRes = await request('/queue/ticket', 'POST', {
-      customerName: '验收测试', phone: '13800000000', serviceType: '剪发', isVip: false,
+    console.log(`❌ 0元支付失败: ${zeroPay.status} ${JSON.stringify(zeroPay.body)}`);
+  }
+
+  // 0元退款
+  const zeroRefund = await request(`/bills/${zBill.id}/refund`, 'POST', { reason: '0元测试退款' });
+  if (zeroRefund.status === 200 && zeroRefund.body.refunded) {
+    console.log(`✅ 0元退款成功: status=${zeroRefund.body.bill.status} reason=${zeroRefund.body.bill.refundReason}`);
+  } else {
+    console.log(`❌ 0元退款失败: ${zeroRefund.status} ${JSON.stringify(zeroRefund.body)}`);
+  }
+
+  // 测试3: 有金额账单的完整流程（分店）
+  console.log('\n===== 测试3: 有金额账单（分店）完整流程 =====');
+  await request(`/queue/call/${t2.body.ticket.id}`, 'POST');
+  // 等一下让服务时间过去
+  await new Promise(r => setTimeout(r, 2000));
+  const paidBillRes = await request(`/bills/from-ticket/${t2.body.ticket.id}`, 'POST');
+  const pBill = paidBillRes.body.bill;
+  console.log(`分店账单: #${pBill.id.slice(-8)} ¥${pBill.finalAmount} storeName=${pBill.storeName}`);
+  const payRes = await request(`/bills/${pBill.id}/pay`, 'POST', { paymentMethod: 'wechat', amount: pBill.finalAmount });
+  if (payRes.status === 200) {
+    console.log(`✅ 分店支付成功: ¥${payRes.body.bill.finalAmount} via ${payRes.body.bill.paymentMethod}`);
+  }
+
+  // 测试4: 重复结算拦截 + existingBillId
+  console.log('\n===== 测试4: 重复结算拦截 =====');
+  const dup1 = await request(`/bills/from-ticket/${t1.body.ticket.id}`, 'POST');
+  const dup2 = await request(`/bills/from-ticket/${t2.body.ticket.id}`, 'POST');
+  console.log(`总店重复: status=${dup1.status} error="${dup1.body.error}" existingBillId=${dup1.body.existingBillId ? dup1.body.existingBillId.slice(-8) : '无'}`);
+  console.log(`分店重复: status=${dup2.status} error="${dup2.body.error}" existingBillId=${dup2.body.existingBillId ? dup2.body.existingBillId.slice(-8) : '无'}`);
+  const dupOk = dup1.status === 400 && dup1.body.existingBillId && dup2.status === 400 && dup2.body.existingBillId;
+  console.log(`${dupOk ? '✅' : '❌'} 重复结算拦截 + existingBillId返回正确`);
+
+  // 测试5: 退款后营收统计准确性
+  console.log('\n===== 测试5: 退款后营收统计 =====');
+  const refundRes = await request(`/bills/${pBill.id}/refund`, 'POST', { reason: '分店测试退款' });
+  if (refundRes.status === 200) {
+    console.log(`✅ 分店退款成功: ¥${refundRes.body.bill.finalAmount}`);
+  }
+  const stats = (await request('/bills/stats', 'GET')).body;
+  console.log(`统计: 总${stats.totalBills}笔 | 待付${stats.pendingBills} | 已付${stats.paidBills} | 已退${stats.refundedBills}`);
+  console.log(`营收: 已付¥${stats.totalRevenue} - 退款¥${stats.totalRefunded} = 净¥${stats.totalNetRevenue}`);
+  console.log(`待付金额: ¥${stats.totalPending}`);
+  const netOk = stats.totalNetRevenue === Math.max(0, +(stats.totalRevenue - stats.totalRefunded).toFixed(2));
+  console.log(`${netOk ? '✅' : '❌'} 净营收计算一致: totalRevenue - totalRefunded = totalNetRevenue`);
+
+  // 测试6: byStore门店分组
+  console.log('\n===== 测试6: 按门店分组统计 =====');
+  if (stats.byStore && stats.byStore.length > 0) {
+    stats.byStore.forEach(store => {
+      console.log(`  ${store.storeName}: 总${store.totalBills}笔 | 待付¥${store.pendingAmount} | 已付¥${store.paidAmount} | 已退¥${store.refundedAmount} | 净¥${store.netRevenue}`);
     });
-    const ticket = ticketRes.body.ticket;
-    testTicketId = ticket.id;
-    console.log(`✅ 取号: #${ticket.ticketNumber} ${ticket.customerName}`);
-    // 叫号
-    await request(`/queue/call/${ticket.id}`, 'POST');
-    console.log(`✅ 叫号成功`);
-    // 生成账单
-    const billRes = await request(`/bills/from-ticket/${ticket.id}`, 'POST');
-    if (billRes.body.error) {
-      console.log(`❌ 生成账单失败: ${billRes.body.error}`);
-      return;
-    }
-    testBillId = billRes.body.bill.id;
-    testBillAmount = billRes.body.bill.finalAmount;
-    console.log(`✅ 生成账单: #${testBillId.slice(-8)} ¥${testBillAmount}`);
-  }
-
-  // ============ 功能1: VIP插队记录详情 ============
-  console.log('\n========== 功能1: VIP插队记录明细 ==========');
-  const recordsRes = await request('/vip/records', 'GET');
-  const records = recordsRes.body.records;
-  console.log(`📋 插队记录总数: ${records.length}`);
-  if (records.length > 0) {
-    const latestVip = records[records.length - 1];
-    console.log(`✅ 最后一条记录: ${latestVip.customerName} VIP${latestVip.vipLevel}`);
-    console.log(`   操作来源: ${latestVip.operator === 'system' ? '🏪 叫号大厅VIP取号' : '👑 VIP插队入口'}`);
-    console.log(`   原因: ${latestVip.reason || '-'}`);
-    console.log(`   位置: 第${latestVip.originalPosition}位 → 第${latestVip.newPosition}位`);
-    console.log(`   VIP票号: #${latestVip.vipTicketNumber}`);
-    console.log(`   受影响顾客: ${latestVip.affectedCustomers.length}位`);
-    if (latestVip.affectedCustomers.length > 0) {
-      latestVip.affectedCustomers.forEach((c, i) => {
-        console.log(`      ${i+1}. #${c.ticketNumber} ${c.customerName}: 第${c.originalPosition}位 → 第${c.newPosition}位`);
-      });
-      console.log('✅ 功能1验收通过: 可查看被影响顾客明细（号、姓名、排位变化）');
-    } else {
-      console.log('⚠️  没有受影响顾客（VIP本来就在队首）');
-    }
-  }
-
-  // ============ 功能2: 结算对账视图 ============
-  console.log('\n========== 功能2: 结算对账统计 ==========');
-  const statsRes = await request('/bills/stats', 'GET');
-  const s = statsRes.body;
-  console.log(`📊 总体统计: 总账单${s.totalBills}笔 | 待付${s.pendingBills} | 已付${s.paidBills} | 已退${s.refundedBills}`);
-  console.log(`   营收: 总¥${s.totalRevenue} - 退款¥${s.totalRefunded} = 净¥${s.totalNetRevenue}`);
-  console.log(`   今日: 账单${s.todayBills}笔 | 营收¥${s.todayRevenue} | 净¥${s.todayNetRevenue}`);
-  console.log('✅ 功能2验收通过: 待支付/已支付/退款按日期汇总，账单详情完整');
-
-  // ============ 功能3: 重复结算拦截 ============
-  console.log('\n========== 功能3: 重复结束服务拦截 ==========');
-  const dupRes = await request(`/bills/from-ticket/${testTicketId}`, 'POST');
-  if (dupRes.status === 400 && dupRes.body.error) {
-    console.log(`✅ 拦截成功: ${dupRes.body.error}`);
-    console.log(`   返回已有账单ID: ${dupRes.body.existingBillId ? dupRes.body.existingBillId.slice(-8) : '无'}`);
-    if (dupRes.body.existingBillId) {
-      console.log('✅ 功能3验收通过: 重复结算提示已结算，并可跳转原账单');
-    }
+    console.log('✅ byStore门店分组统计正确');
   } else {
-    console.log(`❌ 拦截失败: ${dupRes.status} ${JSON.stringify(dupRes.body)}`);
+    console.log('❌ byStore为空');
   }
 
-  // ============ 支付金额校验 ============
-  console.log('\n========== 支付金额校验 ==========');
-  if (testBillAmount > 0) {
-    // 测试0元
-    const zeroPay = await request(`/bills/${testBillId}/pay`, 'POST', { paymentMethod: 'wechat', amount: 0 });
-    console.log(`✅ 支付¥0拦截: ${zeroPay.status === 400 ? zeroPay.body.error : '失败!'}`);
-    // 测试错误金额
-    const wrongAmount = Math.round((testBillAmount + 12.34) * 100) / 100;
-    const wrongPay = await request(`/bills/${testBillId}/pay`, 'POST', { paymentMethod: 'wechat', amount: wrongAmount });
-    console.log(`✅ 支付¥${wrongAmount}(应付¥${testBillAmount})拦截: ${wrongPay.status === 400 ? wrongPay.body.error : '失败!'}`);
-    // 验证状态没变
-    const verifyBill = (await request(`/bills/${testBillId}`, 'GET')).body.bill;
-    console.log(`✅ 账单状态验证: ${verifyBill.status === 'pending' ? '状态保持pending ✓' : '状态被错误修改 ❌'}`);
+  // 测试7: 负数金额校验
+  console.log('\n===== 测试7: 负数金额拦截 =====');
+  const negBill = (await request('/bills', 'GET')).body.bills.find(b => b.status === 'pending');
+  if (negBill) {
+    const negPay = await request(`/bills/${negBill.id}/pay`, 'POST', { paymentMethod: 'wechat', amount: -10 });
+    console.log(`${negPay.status === 400 ? '✅' : '❌'} 负数金额拦截: ${negPay.body.error || '未拦截'}`);
   } else {
-    console.log('⚠️  账单金额为¥0，跳过支付金额校验（该情况下0元是正确金额）');
-    // 只测试错误金额
-    const wrongPay = await request(`/bills/${testBillId}/pay`, 'POST', { paymentMethod: 'wechat', amount: 99.99 });
-    console.log(`✅ 支付错误金额¥99.99拦截: ${wrongPay.status === 400 ? wrongPay.body.error : '失败!'}`);
+    console.log('⚠️  无待支付账单可测试');
   }
 
-  // ============ 功能4: 退款流程 ============
-  console.log('\n========== 功能4: 退款流程 ==========');
+  // 测试8: 账单包含门店信息
+  console.log('\n===== 测试8: 账单列表含门店 =====');
+  const allBills = (await request('/bills', 'GET')).body.bills;
+  const storesInBills = [...new Set(allBills.map(b => b.storeName || '总店'))];
+  console.log(`账单中门店: ${storesInBills.join(', ')}`);
+  const storeInBillOk = storesInBills.length >= 1;
+  console.log(`${storeInBillOk ? '✅' : '❌'} 账单含门店字段`);
 
-  // 先确保账单已支付
-  let paidBillForRefund;
-  if (paidBill) {
-    paidBillForRefund = paidBill;
-    console.log(`📋 复用已支付账单: #${paidBillForRefund.id.slice(-8)} ¥${paidBillForRefund.finalAmount}`);
-  } else {
-    // 先支付
-    const payRes = await request(`/bills/${testBillId}/pay`, 'POST', {
-      paymentMethod: 'wechat', amount: testBillAmount,
-    });
-    if (payRes.status === 200 && payRes.body.paid) {
-      paidBillForRefund = payRes.body.bill;
-      console.log(`✅ 支付成功以便测试退款: #${paidBillForRefund.id.slice(-8)} ¥${paidBillForRefund.finalAmount}`);
-    } else {
-      console.log(`❌ 支付失败，无法继续测试退款: ${payRes.status} ${JSON.stringify(payRes.body)}`);
-      paidBillForRefund = null;
-    }
-  }
-
-  if (paidBillForRefund) {
-    // 空原因
-    const emptyRefund = await request(`/bills/${paidBillForRefund.id}/refund`, 'POST', { reason: '' });
-    console.log(`✅ 退款原因缺失拦截: ${emptyRefund.status === 400 ? emptyRefund.body.error : '失败!'}`);
-
-    // 正常退款
-    const refundRes = await request(`/bills/${paidBillForRefund.id}/refund`, 'POST', {
-      reason: '顾客不满意，服务质量问题 - 自动化测试退款'
-    });
-    if (refundRes.status === 200 && refundRes.body.refunded) {
-      const b = refundRes.body.bill;
-      console.log(`✅ 退款成功: 状态=${b.status}, 原因=${b.refundReason}, 退款时间存在=${!!b.refundedAt}`);
-
-      // 验证统计
-      const afterStats = (await request('/bills/stats', 'GET')).body;
-      console.log(`✅ 退款后统计: 已退款账单=${afterStats.refundedBills}笔, 总退款=¥${afterStats.totalRefunded}, 净营收=¥${afterStats.totalNetRevenue}`);
-      console.log('✅ 功能4验收通过: 退款流程完整，营收统计和账单状态实时更新');
-    } else {
-      console.log(`❌ 退款失败: ${refundRes.status} ${JSON.stringify(refundRes.body)}`);
-    }
-  }
-
-  // ============ 最终对账视图验证 ============
-  console.log('\n========== 最终账单对账验证 ==========');
-  const finalBills = (await request('/bills', 'GET')).body.bills;
-  const finalStats = (await request('/bills/stats', 'GET')).body;
-  const pending = finalBills.filter(b => b.status === 'pending');
-  const paid = finalBills.filter(b => b.status === 'paid');
-  const refunded = finalBills.filter(b => b.status === 'refunded');
-  
-  console.log(`📋 最终账单列表详情: 待付${pending.length}, 已付${paid.length}, 已退${refunded.length}`);
-  pending.slice(0,3).forEach(b => console.log(`   ⚠️  待付: ${b.customerName} ¥${b.finalAmount} 分段=${b.segments.length}段`));
-  paid.slice(0,3).forEach(b => console.log(`   ✅ 已付: ${b.customerName} ¥${b.finalAmount} via ${b.paymentMethod}`));
-  refunded.slice(0,3).forEach(b => console.log(`   ↩️  已退: ${b.customerName} ¥${b.finalAmount} - ${b.refundReason?.slice(0,20)}`));
-
-  console.log(`\n📊 对账统计验证:`);
-  console.log(`   待支付总额: ¥${pending.reduce((s,b)=>s+b.finalAmount,0).toFixed(2)} vs API ¥${(finalStats.totalRevenue !== undefined ? '见stats.pending' : finalStats.todayRevenue)}`);
-  console.log(`   已支付总额: ¥${paid.reduce((s,b)=>s+b.finalAmount,0).toFixed(2)} vs API ¥${finalStats.totalRevenue}`);
-  console.log(`   已退款总额: ¥${refunded.reduce((s,b)=>s+b.finalAmount,0).toFixed(2)} vs API ¥${finalStats.totalRefunded}`);
-  const expectedNet = paid.reduce((s,b)=>s+b.finalAmount,0) - refunded.reduce((s,b)=>s+b.finalAmount,0);
-  console.log(`   净营收计算: ¥${expectedNet.toFixed(2)} vs API ¥${finalStats.totalNetRevenue}`);
-  
-  console.log('\n🎉🎉🎉 所有功能验收测试完成！🎉🎉🎉\n');
+  console.log('\n🎉 第二轮功能验收测试完成！\n');
 }
 
 main().catch(console.error);

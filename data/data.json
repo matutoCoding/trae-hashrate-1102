@@ -204,6 +204,246 @@
         "__type": "Date",
         "value": "2026-06-16T18:06:46.314Z"
       }
+    },
+    {
+      "id": "id-00mptvvvia4qgrrviqrm35",
+      "ticketNumber": 111,
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:23.986Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.007Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.015Z"
+      }
+    },
+    {
+      "id": "id-0aww8t71q5jrpr893xf3q6",
+      "ticketNumber": 112,
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.001Z"
+      },
+      "originalPosition": 7,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.030Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:26.043Z"
+      }
+    },
+    {
+      "id": "id-bxxbf0l81karw8nf55xoph",
+      "ticketNumber": 113,
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.459Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.479Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.487Z"
+      }
+    },
+    {
+      "id": "id-7cem7x04kbpagraytnklk",
+      "ticketNumber": 114,
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.473Z"
+      },
+      "originalPosition": 7,
+      "storeName": "朝阳分店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.501Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:49.523Z"
+      }
+    },
+    {
+      "id": "id-wq8gm5g95xlvr9uq6s021o",
+      "ticketNumber": 115,
+      "customerName": "营收测试",
+      "phone": "13900000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:28:44.588Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:28:44.595Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:28:44.603Z"
+      }
+    },
+    {
+      "id": "id-y6r7mttlo8jtxl91ud5db",
+      "ticketNumber": 116,
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.932Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.937Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.946Z"
+      }
+    },
+    {
+      "id": "id-f0a300v3n0ec0er2hkv65",
+      "ticketNumber": 117,
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.829Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.836Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.846Z"
+      }
+    },
+    {
+      "id": "id-s7j88z19eztk6znkmzuth",
+      "ticketNumber": 118,
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.418Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.437Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.448Z"
+      }
+    },
+    {
+      "id": "id-iyclk7zv1kcb6dftcn2luh",
+      "ticketNumber": 119,
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.431Z"
+      },
+      "originalPosition": 7,
+      "storeName": "朝阳分店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.462Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:12.485Z"
+      }
+    },
+    {
+      "id": "id-das3nm7gqlpajzxat4u01h",
+      "ticketNumber": 120,
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "status": "completed",
+      "position": 6,
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.913Z"
+      },
+      "originalPosition": 6,
+      "storeName": "总店",
+      "calledAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.922Z"
+      },
+      "completedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.930Z"
+      }
     }
   ],
   "insertRecords": [
@@ -469,7 +709,425 @@
         "__type": "Date",
         "value": "2026-06-16T18:06:46.312Z"
       }
+    },
+    {
+      "id": "id-jnwasw56l9q77pfeokab",
+      "ticketId": "id-00mptvvvia4qgrrviqrm35",
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.007Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.013Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.013Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "confirm",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.022Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.026Z"
+      },
+      "refundReason": "0元测试退款"
+    },
+    {
+      "id": "id-9d5qq4byco462mqtzkxlb",
+      "ticketId": "id-0aww8t71q5jrpr893xf3q6",
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:24.030Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:26.041Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:26.041Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:26.048Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:26.054Z"
+      },
+      "refundReason": "分店测试退款"
+    },
+    {
+      "id": "id-793v0bhr7gfv8afha020n",
+      "ticketId": "id-bxxbf0l81karw8nf55xoph",
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.479Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.485Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.486Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "confirm",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.493Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.497Z"
+      },
+      "refundReason": "0元测试退款"
+    },
+    {
+      "id": "id-zn5r1lebvkqtloxxxgkm89",
+      "ticketId": "id-7cem7x04kbpagraytnklk",
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:47.501Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:49.521Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:49.521Z"
+      },
+      "storeName": "朝阳分店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:49.527Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:27:49.534Z"
+      },
+      "refundReason": "分店测试退款"
+    },
+    {
+      "id": "id-g66mahgei1klffdfbl6oej",
+      "ticketId": "id-wq8gm5g95xlvr9uq6s021o",
+      "customerName": "营收测试",
+      "phone": "13900000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:28:44.595Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:44.599Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "pending",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:28:44.601Z"
+      },
+      "storeName": "总店"
+    },
+    {
+      "id": "id-agna0bomktngfs3zs7i1y9",
+      "ticketId": "id-y6r7mttlo8jtxl91ud5db",
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.937Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:33.942Z"
+      },
+      "totalMinutes": 3,
+      "segments": [
+        {
+          "id": "id-x1g47jvl4yqw9voxaxhbw9",
+          "periodName": "测试全天",
+          "startTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:29:33.937Z"
+          },
+          "endTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:32:33.942Z"
+          },
+          "durationMinutes": 3,
+          "unitPrice": 10,
+          "subtotal": 30
+        }
+      ],
+      "baseAmount": 0,
+      "totalAmount": 30,
+      "discountAmount": 0,
+      "finalAmount": 30,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.943Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.952Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:29:33.958Z"
+      },
+      "refundReason": "全额退款测试"
+    },
+    {
+      "id": "id-2b9wg5s0zcnsimvtl2bxp",
+      "ticketId": "id-f0a300v3n0ec0er2hkv65",
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.836Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:34:01.841Z"
+      },
+      "totalMinutes": 3,
+      "segments": [
+        {
+          "id": "id-m23jvtlsdn2fneaflb49s",
+          "periodName": "测试全天",
+          "startTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:31:01.836Z"
+          },
+          "endTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:34:01.841Z"
+          },
+          "durationMinutes": 3,
+          "unitPrice": 10,
+          "subtotal": 30
+        }
+      ],
+      "baseAmount": 0,
+      "totalAmount": 30,
+      "discountAmount": 0,
+      "finalAmount": 30,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.844Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.854Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:31:01.861Z"
+      },
+      "refundReason": "全额退款测试"
+    },
+    {
+      "id": "id-ipelzvc5b4pc6wha0qb4fr",
+      "ticketId": "id-s7j88z19eztk6znkmzuth",
+      "customerName": "总店顾客",
+      "phone": "13800000001",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.437Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.445Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.446Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "confirm",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.454Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.458Z"
+      },
+      "refundReason": "0元测试退款"
+    },
+    {
+      "id": "id-9hsq4mexkkpodriuuiz3l",
+      "ticketId": "id-iyclk7zv1kcb6dftcn2luh",
+      "customerName": "分店顾客",
+      "phone": "13800000002",
+      "serviceType": "烫发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:10.462Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:12.482Z"
+      },
+      "totalMinutes": 0,
+      "segments": [],
+      "baseAmount": 0,
+      "totalAmount": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:12.482Z"
+      },
+      "storeName": "朝阳分店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:12.492Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:12.498Z"
+      },
+      "refundReason": "分店测试退款"
+    },
+    {
+      "id": "id-mn22r82av7h6r9dg7o18s",
+      "ticketId": "id-das3nm7gqlpajzxat4u01h",
+      "customerName": "有金额测试",
+      "phone": "13900000099",
+      "serviceType": "剪发",
+      "isVip": false,
+      "startTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.922Z"
+      },
+      "endTime": {
+        "__type": "Date",
+        "value": "2026-06-16T18:35:18.926Z"
+      },
+      "totalMinutes": 3,
+      "segments": [
+        {
+          "id": "id-8l6xzk2sbroau9fpbj4ge4",
+          "periodName": "测试全天",
+          "startTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:32:18.922Z"
+          },
+          "endTime": {
+            "__type": "Date",
+            "value": "2026-06-16T18:35:18.926Z"
+          },
+          "durationMinutes": 3,
+          "unitPrice": 10,
+          "subtotal": 30
+        }
+      ],
+      "baseAmount": 0,
+      "totalAmount": 30,
+      "discountAmount": 0,
+      "finalAmount": 30,
+      "status": "refunded",
+      "createdAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.928Z"
+      },
+      "storeName": "总店",
+      "paymentMethod": "wechat",
+      "paidAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.936Z"
+      },
+      "refundedAt": {
+        "__type": "Date",
+        "value": "2026-06-16T18:32:18.942Z"
+      },
+      "refundReason": "全额退款测试"
     }
   ],
-  "ticketCounter": 111
+  "ticketCounter": 121
 }

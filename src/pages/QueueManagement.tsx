@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Play, Square, X, Clock, Users, AlertTriangle, ArrowRight, Receipt } from 'lucide-react';
+import { Play, Square, X, Clock, Users, AlertTriangle, ArrowRight, Receipt, Undo2, Crown, Store } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import QueueCard from '../components/QueueCard';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
-import type { QueueItem } from '../../shared/types';
+import type { QueueItem, Bill } from '../../shared/types';
 
 export default function QueueManagement() {
   const { queue, loading, fetchQueue, callNext, callTicket, completeService, cancelTicket, createBillFromTicket, bills } = useStore();
@@ -12,7 +12,7 @@ export default function QueueManagement() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<'call' | 'complete' | 'cancel'>('call');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [duplicateBillId, setDuplicateBillId] = useState<string | null>(null);
+  const [duplicateBill, setDuplicateBill] = useState<Bill | null>(null);
   const [duplicateMessage, setDuplicateMessage] = useState('');
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -29,6 +29,22 @@ export default function QueueManagement() {
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const formatDateTime = (date?: Date) => {
+    if (!date) return '--';
+    return new Date(date).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const statusLabels = {
+    pending: { text: '待支付', color: 'text-barber-gold bg-barber-gold/20' },
+    paid: { text: '已支付', color: 'text-green-400 bg-green-500/20' },
+    refunded: { text: '已退款', color: 'text-red-400 bg-red-500/20' },
   };
 
   const handleCallNext = async () => {
@@ -59,9 +75,14 @@ export default function QueueManagement() {
         case 'complete': {
           const result = await createBillFromTicket(selectedItem.id);
           if (result.error && result.existingBillId) {
-            setDuplicateBillId(result.existingBillId);
-            setDuplicateMessage(result.error);
-            setShowDuplicateModal(true);
+            const existing = bills.find(b => b.id === result.existingBillId);
+            if (existing) {
+              setDuplicateBill(existing);
+              setDuplicateMessage(result.error);
+              setShowDuplicateModal(true);
+            } else {
+              showToast('error', result.error);
+            }
             setShowConfirmModal(false);
             setSelectedItem(null);
             return;
@@ -90,8 +111,8 @@ export default function QueueManagement() {
 
   const goToBill = () => {
     setShowDuplicateModal(false);
-    setDuplicateBillId(null);
-    window.dispatchEvent(new CustomEvent('navigate', { detail: { path: '/bills', billId: duplicateBillId } }));
+    setDuplicateBill(null);
+    window.dispatchEvent(new CustomEvent('navigate', { detail: { path: '/bills' } }));
   };
 
   const actionLabels = {
@@ -99,8 +120,6 @@ export default function QueueManagement() {
     complete: '完成服务',
     cancel: '取消排队',
   };
-
-  const duplicateBill = duplicateBillId ? bills.find(b => b.id === duplicateBillId) : null;
 
   return (
     <div className="space-y-6">
@@ -284,10 +303,10 @@ export default function QueueManagement() {
         isOpen={showDuplicateModal}
         onClose={() => {
           setShowDuplicateModal(false);
-          setDuplicateBillId(null);
+          setDuplicateBill(null);
         }}
-        title="重复结算提示"
-        size="sm"
+        title="已结算提示"
+        size="lg"
       >
         <div className="space-y-4">
           <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/30">
@@ -303,33 +322,76 @@ export default function QueueManagement() {
           </div>
 
           {duplicateBill && (
-            <div className="glass-card p-4">
-              <p className="text-xs text-barber-silver mb-2">已有账单信息</p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">顾客：</span>
-                  <span className="text-barber-cream font-medium">{duplicateBill.customerName}</span>
+            <div className="border border-barber-gold/20 rounded-xl p-5 bg-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-barber-cream flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-barber-gold" />
+                  原账单详情
+                </h3>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusLabels[duplicateBill.status].color}`}>
+                  {statusLabels[duplicateBill.status].text}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-barber-silver">顾客</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-barber-cream font-medium">{duplicateBill.customerName}</span>
+                    {duplicateBill.isVip && (
+                      <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-barber-gold/20 text-barber-gold text-xs">
+                        <Crown className="w-3 h-3" />VIP
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">服务项目：</span>
-                  <span className="text-barber-cream">{duplicateBill.serviceType}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">金额：</span>
-                  <span className="text-barber-gold font-bold">¥{duplicateBill.finalAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">状态：</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    duplicateBill.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
-                    duplicateBill.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>
-                    {duplicateBill.status === 'pending' ? '待支付' :
-                     duplicateBill.status === 'paid' ? '已支付' : '已退款'}
+                <div>
+                  <p className="text-xs text-barber-silver">门店</p>
+                  <span className="text-barber-cream flex items-center gap-1">
+                    <Store className="w-3 h-3 text-barber-gold" />
+                    {duplicateBill.storeName || '总店'}
                   </span>
                 </div>
+                <div>
+                  <p className="text-xs text-barber-silver">服务项目</p>
+                  <p className="text-barber-cream">{duplicateBill.serviceType}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-barber-silver">应付金额</p>
+                  <p className="text-barber-gold font-bold text-lg">¥{duplicateBill.finalAmount.toFixed(2)}</p>
+                </div>
+                {duplicateBill.paidAt && (
+                  <div>
+                    <p className="text-xs text-barber-silver">支付时间</p>
+                    <p className="text-barber-cream text-sm">{formatDateTime(duplicateBill.paidAt)}</p>
+                  </div>
+                )}
+                {duplicateBill.paymentMethod && (
+                  <div>
+                    <p className="text-xs text-barber-silver">支付方式</p>
+                    <p className="text-barber-cream text-sm">
+                      {duplicateBill.paymentMethod === 'wechat' && '微信支付'}
+                      {duplicateBill.paymentMethod === 'alipay' && '支付宝'}
+                      {duplicateBill.paymentMethod === 'card' && '银行卡'}
+                      {duplicateBill.paymentMethod === 'cash' && '现金'}
+                      {duplicateBill.paymentMethod === 'confirm' && '确认结清'}
+                    </p>
+                  </div>
+                )}
               </div>
+              {duplicateBill.status === 'refunded' && (
+                <div className="border-t border-barber-gold/10 pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-barber-silver">退款金额</span>
+                    <span className="text-red-400 font-medium">-¥{duplicateBill.finalAmount.toFixed(2)}</span>
+                  </div>
+                  {duplicateBill.refundReason && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-barber-silver">退款原因</span>
+                      <span className="text-barber-cream text-sm">{duplicateBill.refundReason}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -337,7 +399,7 @@ export default function QueueManagement() {
             <button
               onClick={() => {
                 setShowDuplicateModal(false);
-                setDuplicateBillId(null);
+                setDuplicateBill(null);
               }}
               className="flex-1 btn-secondary"
             >
@@ -348,7 +410,7 @@ export default function QueueManagement() {
               className="flex-1 btn-gold flex items-center justify-center gap-1"
             >
               <Receipt className="w-4 h-4" />
-              查看原账单
+              前往账单页
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

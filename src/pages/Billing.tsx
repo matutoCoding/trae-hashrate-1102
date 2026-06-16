@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Receipt, Clock, DollarSign, CreditCard, QrCode, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Receipt, Clock, DollarSign, CreditCard, QrCode, CheckCircle, AlertTriangle, ArrowRight, Store } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
@@ -10,6 +10,7 @@ const paymentMethods = [
   { id: 'alipay', name: '支付宝', icon: QrCode },
   { id: 'card', name: '银行卡', icon: CreditCard },
   { id: 'cash', name: '现金', icon: DollarSign },
+  { id: 'confirm', name: '确认结清', icon: CheckCircle },
 ];
 
 export default function Billing() {
@@ -21,7 +22,8 @@ export default function Billing() {
   const [paySuccess, setPaySuccess] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
-  const [duplicateInfo, setDuplicateInfo] = useState<{ message: string; billId: string } | null>(null);
+  const [duplicateBill, setDuplicateBill] = useState<Bill | null>(null);
+  const [duplicateMessage, setDuplicateMessage] = useState('');
 
   useEffect(() => {
     fetchQueue();
@@ -35,16 +37,33 @@ export default function Billing() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const formatDateTime = (date?: Date) => {
+    if (!date) return '--';
+    return new Date(date).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const statusLabels = {
+    pending: { text: '待支付', color: 'text-barber-gold bg-barber-gold/20' },
+    paid: { text: '已支付', color: 'text-green-400 bg-green-500/20' },
+    refunded: { text: '已退款', color: 'text-red-400 bg-red-500/20' },
+  };
+
   const handleGenerateBill = async (ticket: QueueItem) => {
     try {
       const result = await createBillFromTicket(ticket.id);
       if (result.error && result.existingBillId) {
-        setDuplicateInfo({ message: result.error, billId: result.existingBillId });
-        setShowDuplicateModal(true);
-        const existingBill = bills.find(b => b.id === result.existingBillId);
-        if (existingBill) {
-          setCurrentBill(existingBill);
-          setSelectedTicket(ticket);
+        const existing = bills.find(b => b.id === result.existingBillId);
+        if (existing) {
+          setDuplicateBill(existing);
+          setDuplicateMessage(result.error);
+          setShowDuplicateModal(true);
+        } else {
+          showToast('error', result.error);
         }
         return;
       }
@@ -63,8 +82,6 @@ export default function Billing() {
     }
   };
 
-  const duplicateBill = duplicateInfo ? bills.find(b => b.id === duplicateInfo.billId) : null;
-
   const handlePay = async () => {
     if (!currentBill) return;
     
@@ -73,7 +90,7 @@ export default function Billing() {
       if (paidBill) {
         setCurrentBill(paidBill);
         setPaySuccess(true);
-        showToast('success', '支付成功');
+        showToast('success', currentBill.finalAmount === 0 ? '已确认结清' : '支付成功');
         setTimeout(() => {
           setShowPayModal(false);
           setPaySuccess(false);
@@ -82,24 +99,16 @@ export default function Billing() {
         }, 2000);
       }
     } catch (e) {
-      showToast('error', '支付失败');
+      showToast('error', currentBill.finalAmount === 0 ? '确认结清失败' : '支付失败');
       console.error('支付失败', e);
     }
   };
 
-  const formatTime = (date?: Date) => {
-    if (!date) return '--:--';
-    return new Date(date).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDateTime = (date?: Date) => {
-    if (!date) return '--';
-    return new Date(date).toLocaleString('zh-CN', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const goToBills = () => {
+    setShowDuplicateModal(false);
+    setDuplicateBill(null);
+    setDuplicateMessage('');
+    window.dispatchEvent(new CustomEvent('navigate', { detail: { path: '/bills' } }));
   };
 
   return (
@@ -136,7 +145,7 @@ export default function Billing() {
                         <p className="font-medium text-barber-cream">{item.customerName}</p>
                         <p className="text-sm text-barber-silver">{item.serviceType}</p>
                         <p className="text-xs text-barber-silver mt-1">
-                          开始于 {formatTime(item.calledAt)}
+                          开始于 {new Date(item.calledAt!).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -159,13 +168,21 @@ export default function Billing() {
                   <Receipt className="w-5 h-5 text-barber-gold" />
                   账单详情
                 </h2>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  currentBill.status === 'paid' 
-                    ? 'bg-green-500/20 text-green-400' 
-                    : 'bg-barber-gold/20 text-barber-gold'
-                }`}>
-                  {currentBill.status === 'paid' ? '已支付' : '待支付'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-barber-gold/10 text-barber-gold border border-barber-gold/20 flex items-center gap-1">
+                    <Store className="w-3 h-3" />
+                    {currentBill.storeName || '总店'}
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    currentBill.status === 'paid' 
+                      ? 'bg-green-500/20 text-green-400' 
+                      : currentBill.status === 'refunded'
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-barber-gold/20 text-barber-gold'
+                  }`}>
+                    {currentBill.status === 'paid' ? '已支付' : currentBill.status === 'refunded' ? '已退款' : '待支付'}
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
@@ -190,32 +207,36 @@ export default function Billing() {
               <div className="mb-6">
                 <h3 className="font-medium text-barber-cream mb-3">计费明细</h3>
                 <div className="glass-card p-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-barber-silver border-b border-barber-gold/10">
-                        <th className="text-left py-2">时段</th>
-                        <th className="text-center py-2">时长</th>
-                        <th className="text-center py-2">单价</th>
-                        <th className="text-right py-2">小计</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentBill.segments.map((segment) => (
-                        <tr key={segment.id} className="border-b border-barber-gold/5">
-                          <td className="py-3 text-barber-cream">{segment.periodName}</td>
-                          <td className="py-3 text-center text-barber-silver">
-                            {segment.durationMinutes.toFixed(1)} 分钟
-                          </td>
-                          <td className="py-3 text-center text-barber-silver">
-                            ¥{segment.unitPrice}/分
-                          </td>
-                          <td className="py-3 text-right text-barber-gold font-medium">
-                            ¥{segment.subtotal.toFixed(2)}
-                          </td>
+                  {currentBill.segments.length === 0 ? (
+                    <p className="text-sm text-barber-silver py-2">无分段（0元账单）</p>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-barber-silver border-b border-barber-gold/10">
+                          <th className="text-left py-2">时段</th>
+                          <th className="text-center py-2">时长</th>
+                          <th className="text-center py-2">单价</th>
+                          <th className="text-right py-2">小计</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {currentBill.segments.map((segment) => (
+                          <tr key={segment.id} className="border-b border-barber-gold/5">
+                            <td className="py-3 text-barber-cream">{segment.periodName}</td>
+                            <td className="py-3 text-center text-barber-silver">
+                              {segment.durationMinutes.toFixed(1)} 分钟
+                            </td>
+                            <td className="py-3 text-center text-barber-silver">
+                              ¥{segment.unitPrice}/分
+                            </td>
+                            <td className="py-3 text-right text-barber-gold font-medium">
+                              ¥{segment.subtotal.toFixed(2)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
 
@@ -247,7 +268,7 @@ export default function Billing() {
                   onClick={() => setShowPayModal(true)}
                   className="w-full btn-gold mt-6"
                 >
-                  去支付
+                  {currentBill.finalAmount === 0 ? '确认结清' : '去支付'}
                 </button>
               )}
             </div>
@@ -268,13 +289,16 @@ export default function Billing() {
                   {bills.filter(b => b.status === 'paid').length} 笔
                 </span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-barber-silver">已退款</span>
+                <span className="text-red-400 font-medium">
+                  {bills.filter(b => b.status === 'refunded').length} 笔
+                </span>
+              </div>
               <div className="flex items-center justify-between pt-4 border-t border-barber-gold/20">
-                <span className="text-barber-silver">今日营收</span>
+                <span className="text-barber-silver">净营收</span>
                 <span className="ticket-number text-xl font-bold gold-gradient">
-                  ¥{bills
-                    .filter(b => b.status === 'paid')
-                    .reduce((sum, b) => sum + b.finalAmount, 0)
-                    .toFixed(2)}
+                  ¥{bills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.finalAmount, 0).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -291,8 +315,13 @@ export default function Billing() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-barber-gold">¥{bill.finalAmount.toFixed(2)}</p>
-                    <p className="text-xs text-barber-silver">
-                      {bill.status === 'paid' ? '已支付' : '待支付'}
+                    <p className="text-xs">
+                      <span className={
+                        bill.status === 'paid' ? 'text-green-400' :
+                        bill.status === 'refunded' ? 'text-red-400' : 'text-amber-400'
+                      }>
+                        {bill.status === 'paid' ? '已支付' : bill.status === 'refunded' ? '已退款' : '待支付'}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -308,41 +337,45 @@ export default function Billing() {
       <Modal
         isOpen={showPayModal}
         onClose={() => !paySuccess && setShowPayModal(false)}
-        title="选择支付方式"
+        title={currentBill?.finalAmount === 0 ? '确认结清' : '选择支付方式'}
       >
         {paySuccess ? (
           <div className="text-center py-8 animate-fade-in">
             <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-green-400" />
             </div>
-            <h3 className="text-xl font-bold text-barber-cream mb-2">支付成功</h3>
+            <h3 className="text-xl font-bold text-barber-cream mb-2">
+              {currentBill?.finalAmount === 0 ? '确认结清成功' : '支付成功'}
+            </h3>
             <p className="text-barber-silver">感谢您的光临</p>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              {paymentMethods.map((method) => {
-                const Icon = method.icon;
-                return (
-                  <button
-                    key={method.id}
-                    onClick={() => setSelectedPayment(method.id)}
-                    className={`glass-card p-4 text-center transition-all ${
-                      selectedPayment === method.id
-                        ? 'border-barber-gold shadow-gold'
-                        : 'hover:border-barber-gold/50'
-                    }`}
-                  >
-                    <Icon className="w-8 h-8 mx-auto mb-2 text-barber-gold" />
-                    <p className="text-sm text-barber-cream">{method.name}</p>
-                  </button>
-                );
-              })}
+              {paymentMethods
+                .filter(m => currentBill?.finalAmount === 0 ? m.id === 'confirm' : m.id !== 'confirm')
+                .map((method) => {
+                  const Icon = method.icon;
+                  return (
+                    <button
+                      key={method.id}
+                      onClick={() => setSelectedPayment(method.id)}
+                      className={`glass-card p-4 text-center transition-all ${
+                        selectedPayment === method.id
+                          ? 'border-barber-gold shadow-gold'
+                          : 'hover:border-barber-gold/50'
+                      }`}
+                    >
+                      <Icon className="w-8 h-8 mx-auto mb-2 text-barber-gold" />
+                      <p className="text-sm text-barber-cream">{method.name}</p>
+                    </button>
+                  );
+                })}
             </div>
 
             <div className="glass-card p-4 mt-4">
               <div className="flex items-center justify-between">
-                <span className="text-barber-silver">支付金额</span>
+                <span className="text-barber-silver">{currentBill?.finalAmount === 0 ? '确认金额' : '支付金额'}</span>
                 <span className="ticket-number text-2xl font-bold gold-gradient">
                   ¥{currentBill?.finalAmount.toFixed(2)}
                 </span>
@@ -360,7 +393,7 @@ export default function Billing() {
                 onClick={handlePay}
                 className="flex-1 btn-gold"
               >
-                确认支付
+                {currentBill?.finalAmount === 0 ? '确认结清' : '确认支付'}
               </button>
             </div>
           </div>
@@ -371,10 +404,11 @@ export default function Billing() {
         isOpen={showDuplicateModal}
         onClose={() => {
           setShowDuplicateModal(false);
-          setDuplicateInfo(null);
+          setDuplicateBill(null);
+          setDuplicateMessage('');
         }}
-        title="提示：该顾客已结算"
-        size="sm"
+        title="已结算提示"
+        size="lg"
       >
         <div className="space-y-4">
           <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/30">
@@ -383,52 +417,82 @@ export default function Billing() {
                 <AlertTriangle className="w-5 h-5 text-amber-400" />
               </div>
               <div>
-                <p className="text-amber-400 font-medium">已生成账单</p>
-                <p className="text-sm text-barber-silver mt-1">{duplicateInfo?.message}</p>
+                <p className="text-amber-400 font-medium">该顾客已结算</p>
+                <p className="text-sm text-barber-silver mt-1">{duplicateMessage}</p>
               </div>
             </div>
           </div>
 
           {duplicateBill && (
-            <div className="glass-card p-4">
-              <p className="text-xs text-barber-silver mb-2">已存在的账单</p>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">顾客：</span>
-                  <span className="text-barber-cream font-medium">{duplicateBill.customerName}</span>
+            <div className="border border-barber-gold/20 rounded-xl p-5 bg-white/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-barber-cream flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-barber-gold" />
+                  原账单详情
+                </h3>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusLabels[duplicateBill.status].color}`}>
+                  {statusLabels[duplicateBill.status].text}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-barber-silver">顾客</p>
+                  <p className="text-barber-cream font-medium">{duplicateBill.customerName}</p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">金额：</span>
-                  <span className="text-barber-gold font-bold">¥{duplicateBill.finalAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-barber-silver text-sm">状态：</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    duplicateBill.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
-                    duplicateBill.status === 'paid' ? 'bg-green-500/20 text-green-400' :
-                    'bg-red-500/20 text-red-400'
-                  }`}>
-                    {duplicateBill.status === 'pending' ? '待支付' :
-                     duplicateBill.status === 'paid' ? '已支付' : '已退款'}
+                <div>
+                  <p className="text-xs text-barber-silver">门店</p>
+                  <span className="text-barber-cream flex items-center gap-1">
+                    <Store className="w-3 h-3 text-barber-gold" />
+                    {duplicateBill.storeName || '总店'}
                   </span>
                 </div>
+                <div>
+                  <p className="text-xs text-barber-silver">服务项目</p>
+                  <p className="text-barber-cream">{duplicateBill.serviceType}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-barber-silver">应付金额</p>
+                  <p className="text-barber-gold font-bold text-lg">¥{duplicateBill.finalAmount.toFixed(2)}</p>
+                </div>
+                {duplicateBill.paidAt && (
+                  <div>
+                    <p className="text-xs text-barber-silver">支付时间</p>
+                    <p className="text-barber-cream text-sm">{formatDateTime(duplicateBill.paidAt)}</p>
+                  </div>
+                )}
+                {duplicateBill.paymentMethod && (
+                  <div>
+                    <p className="text-xs text-barber-silver">支付方式</p>
+                    <p className="text-barber-cream text-sm">
+                      {duplicateBill.paymentMethod === 'wechat' && '微信支付'}
+                      {duplicateBill.paymentMethod === 'alipay' && '支付宝'}
+                      {duplicateBill.paymentMethod === 'card' && '银行卡'}
+                      {duplicateBill.paymentMethod === 'cash' && '现金'}
+                      {duplicateBill.paymentMethod === 'confirm' && '确认结清'}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          <p className="text-sm text-barber-silver">
-            已自动为您打开该账单，您可以直接查看或继续支付。
-          </p>
-
-          <div className="pt-2">
+          <div className="flex gap-3 pt-2">
             <button
               onClick={() => {
                 setShowDuplicateModal(false);
-                setDuplicateInfo(null);
+                setDuplicateBill(null);
+                setDuplicateMessage('');
               }}
-              className="w-full btn-gold flex items-center justify-center gap-1"
+              className="flex-1 btn-secondary"
             >
-              查看账单详情
+              知道了
+            </button>
+            <button
+              onClick={goToBills}
+              className="flex-1 btn-gold flex items-center justify-center gap-1"
+            >
+              <Receipt className="w-4 h-4" />
+              前往账单页
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

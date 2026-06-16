@@ -209,8 +209,8 @@ export const useStore = create<AppState>((set, get) => ({
       return { bill: result.bill };
     } catch (e) {
       const err = e as any;
-      const errorMsg = err?.response?.data?.error || err.message;
-      const existingBillId = err?.response?.data?.existingBillId;
+      const errorMsg = err?.message || '生成账单失败';
+      const existingBillId = err?.data?.existingBillId;
       set({ error: errorMsg });
       return { bill: null, error: errorMsg, existingBillId };
     } finally {

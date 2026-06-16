@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Receipt, Search, Filter, ChevronDown, Clock, Crown, Undo2, Calendar, PieChart, ArrowRight, X } from 'lucide-react';
+import { Receipt, Search, Filter, ChevronDown, Clock, Crown, Undo2, Calendar, PieChart, ArrowRight, X, Store } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import Modal from '../components/Modal';
 import type { Bill } from '../../shared/types';
@@ -10,6 +10,7 @@ export default function BillsList() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [storeFilter, setStoreFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'list' | 'summary'>('list');
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refundReason, setRefundReason] = useState('');
@@ -49,16 +50,37 @@ export default function BillsList() {
     refunded: { text: '已退款', color: 'text-red-400 bg-red-500/20' },
   };
 
+  const storeNames = useMemo(() => 
+    [...new Set(bills.map(b => b.storeName || '总店'))].sort(),
+    [bills]
+  );
+
   const filteredBills = useMemo(() => bills.filter(bill => {
     const matchesSearch = bill.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bill.ticketId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || bill.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }), [bills, searchTerm, statusFilter]);
+    const matchesStore = storeFilter === 'all' || (bill.storeName || '总店') === storeFilter;
+    return matchesSearch && matchesStatus && matchesStore;
+  }), [bills, searchTerm, statusFilter, storeFilter]);
+
+  const displayBills = useMemo(() => {
+    if (storeFilter === 'all') return filteredBills;
+    return filteredBills;
+  }, [filteredBills, storeFilter]);
 
   const dailySummary = useMemo(() => {
     const map = new Map<string, {
       date: string;
+      stores: Map<string, {
+        storeName: string;
+        pendingCount: number;
+        paidCount: number;
+        refundedCount: number;
+        pendingAmount: number;
+        paidAmount: number;
+        refundedAmount: number;
+        netAmount: number;
+      }>;
       pendingCount: number;
       paidCount: number;
       refundedCount: number;
@@ -68,56 +90,75 @@ export default function BillsList() {
       netAmount: number;
     }>();
 
-    bills.forEach(bill => {
+    const targetBills = storeFilter === 'all' ? bills : bills.filter(b => (b.storeName || '总店') === storeFilter);
+
+    targetBills.forEach(bill => {
       const dateStr = formatDate(bill.createdAt);
+      const billStore = bill.storeName || '总店';
       if (!map.has(dateStr)) {
         map.set(dateStr, {
           date: dateStr,
-          pendingCount: 0,
-          paidCount: 0,
-          refundedCount: 0,
-          pendingAmount: 0,
-          paidAmount: 0,
-          refundedAmount: 0,
-          netAmount: 0,
+          stores: new Map(),
+          pendingCount: 0, paidCount: 0, refundedCount: 0,
+          pendingAmount: 0, paidAmount: 0, refundedAmount: 0, netAmount: 0,
         });
       }
       const entry = map.get(dateStr)!;
+      if (!entry.stores.has(billStore)) {
+        entry.stores.set(billStore, {
+          storeName: billStore,
+          pendingCount: 0, paidCount: 0, refundedCount: 0,
+          pendingAmount: 0, paidAmount: 0, refundedAmount: 0, netAmount: 0,
+        });
+      }
+      const storeEntry = entry.stores.get(billStore)!;
       if (bill.status === 'pending') {
         entry.pendingCount++;
         entry.pendingAmount += bill.finalAmount;
+        storeEntry.pendingCount++;
+        storeEntry.pendingAmount += bill.finalAmount;
       } else if (bill.status === 'paid') {
         entry.paidCount++;
         entry.paidAmount += bill.finalAmount;
         entry.netAmount += bill.finalAmount;
+        storeEntry.paidCount++;
+        storeEntry.paidAmount += bill.finalAmount;
+        storeEntry.netAmount += bill.finalAmount;
       } else if (bill.status === 'refunded') {
         entry.refundedCount++;
         entry.refundedAmount += bill.finalAmount;
-        entry.netAmount -= bill.finalAmount;
+        storeEntry.refundedCount++;
+        storeEntry.refundedAmount += bill.finalAmount;
       }
     });
 
     return Array.from(map.values()).sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [bills]);
+  }, [bills, storeFilter]);
 
   const totalPaid = useMemo(() => 
-    bills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.finalAmount, 0),
-    [bills]
+    displayBills.filter(b => b.status === 'paid').reduce((sum, b) => sum + b.finalAmount, 0),
+    [displayBills]
   );
 
   const totalPending = useMemo(() => 
-    bills.filter(b => b.status === 'pending').reduce((sum, b) => sum + b.finalAmount, 0),
-    [bills]
+    displayBills.filter(b => b.status === 'pending').reduce((sum, b) => sum + b.finalAmount, 0),
+    [displayBills]
   );
 
   const totalRefunded = useMemo(() => 
-    bills.filter(b => b.status === 'refunded').reduce((sum, b) => sum + b.finalAmount, 0),
-    [bills]
+    displayBills.filter(b => b.status === 'refunded').reduce((sum, b) => sum + b.finalAmount, 0),
+    [displayBills]
   );
 
-  const netRevenue = totalPaid - totalRefunded;
+  const totalGrossRevenue = totalPaid + totalRefunded;
+  const netRevenue = totalGrossRevenue - totalRefunded;
+
+  const openBillDetail = (bill: Bill) => {
+    setSelectedBill(bill);
+    setShowDetailModal(true);
+  };
 
   const handleRefund = async () => {
     if (!selectedBill) return;
@@ -178,6 +219,26 @@ export default function BillsList() {
         </div>
       </div>
 
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <Store className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-barber-silver" />
+          <select
+            value={storeFilter}
+            onChange={(e) => setStoreFilter(e.target.value)}
+            className="pl-10 pr-8 py-2.5 rounded-xl bg-barber-darker border border-barber-gold/20 text-barber-cream focus:border-barber-gold focus:outline-none transition-colors appearance-none cursor-pointer"
+          >
+            <option value="all">全部门店</option>
+            {storeNames.map(name => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-barber-silver pointer-events-none" />
+        </div>
+        <span className="text-sm text-barber-silver">
+          {storeFilter === 'all' ? `共 ${storeNames.length} 家门店` : `当前：${storeFilter}`}
+        </span>
+      </div>
+
       <div className="grid grid-cols-5 gap-4">
         <div className="glass-card p-4">
           <div className="flex items-center gap-3">
@@ -186,7 +247,7 @@ export default function BillsList() {
             </div>
             <div>
               <p className="text-sm text-barber-silver">总账单</p>
-              <p className="text-xl font-bold text-barber-cream">{bills.length}</p>
+              <p className="text-xl font-bold text-barber-cream">{displayBills.length}</p>
             </div>
           </div>
         </div>
@@ -240,7 +301,10 @@ export default function BillsList() {
         <div className="glass-card p-6">
           <h2 className="font-display text-xl font-bold text-barber-cream mb-6 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-barber-gold" />
-            按日期汇总（门店：总店）
+            按日期汇总
+            {storeFilter !== 'all' && (
+              <span className="text-sm font-normal text-barber-silver ml-2">· {storeFilter}</span>
+            )}
           </h2>
           <div className="space-y-4">
             {dailySummary.length === 0 ? (
@@ -258,7 +322,7 @@ export default function BillsList() {
                       <p className="text-xl font-bold gold-gradient">¥{day.netAmount.toFixed(2)}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="bg-amber-500/10 rounded-lg p-4 border border-amber-500/20">
                       <div className="flex items-center justify-between">
                         <div>
@@ -287,6 +351,25 @@ export default function BillsList() {
                       </div>
                     </div>
                   </div>
+                  {day.stores.size > 1 && (
+                    <div className="border-t border-barber-gold/10 pt-3 mt-2 space-y-2">
+                      <p className="text-xs text-barber-silver mb-2">门店小计</p>
+                      {Array.from(day.stores.values()).map(store => (
+                        <div key={store.storeName} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/5">
+                          <div className="flex items-center gap-2">
+                            <Store className="w-3.5 h-3.5 text-barber-gold" />
+                            <span className="text-sm text-barber-cream font-medium">{store.storeName}</span>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs">
+                            <span className="text-amber-400">待付 ¥{store.pendingAmount.toFixed(2)}</span>
+                            <span className="text-green-400">已付 ¥{store.paidAmount.toFixed(2)}</span>
+                            <span className="text-red-400">已退 ¥{store.refundedAmount.toFixed(2)}</span>
+                            <span className="text-barber-gold font-medium">净 ¥{store.netAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -332,6 +415,7 @@ export default function BillsList() {
                 <tr className="border-b border-barber-gold/20 text-barber-silver text-sm">
                   <th className="text-left py-3 font-medium">账单号</th>
                   <th className="text-left py-3 font-medium">顾客</th>
+                  <th className="text-left py-3 font-medium">门店</th>
                   <th className="text-left py-3 font-medium">服务项目</th>
                   <th className="text-left py-3 font-medium">开始时间</th>
                   <th className="text-left py-3 font-medium">时长</th>
@@ -343,13 +427,13 @@ export default function BillsList() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-barber-silver">
+                    <td colSpan={9} className="text-center py-8 text-barber-silver">
                       加载中...
                     </td>
                   </tr>
                 ) : filteredBills.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-barber-silver">
+                    <td colSpan={9} className="text-center py-8 text-barber-silver">
                       暂无账单记录
                     </td>
                   </tr>
@@ -373,6 +457,11 @@ export default function BillsList() {
                           )}
                         </div>
                       </td>
+                      <td className="py-4">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-barber-gold/10 text-barber-gold border border-barber-gold/20">
+                          {bill.storeName || '总店'}
+                        </span>
+                      </td>
                       <td className="py-4 text-barber-silver">{bill.serviceType}</td>
                       <td className="py-4 text-barber-silver text-sm">
                         {formatDateTime(bill.startTime)}
@@ -391,10 +480,7 @@ export default function BillsList() {
                       <td className="py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => {
-                              setSelectedBill(bill);
-                              setShowDetailModal(true);
-                            }}
+                            onClick={() => openBillDetail(bill)}
                             className="text-barber-gold hover:text-barber-gold-light text-sm font-medium transition-colors"
                           >
                             查看详情
@@ -453,6 +539,13 @@ export default function BillsList() {
                 </div>
               </div>
               <div>
+                <p className="text-sm text-barber-silver mb-1">门店</p>
+                <span className="text-barber-cream flex items-center gap-1.5">
+                  <Store className="w-3.5 h-3.5 text-barber-gold" />
+                  {selectedBill.storeName || '总店'}
+                </span>
+              </div>
+              <div>
                 <p className="text-sm text-barber-silver mb-1">服务项目</p>
                 <p className="text-barber-cream">{selectedBill.serviceType}</p>
               </div>
@@ -472,27 +565,31 @@ export default function BillsList() {
                 计费分段明细
               </h3>
               <div className="space-y-2">
-                {selectedBill.segments.map((segment, idx) => (
-                  <div key={segment.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-barber-darker/50">
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-barber-gold/20 flex items-center justify-center text-barber-gold text-xs font-bold">
-                        {idx + 1}
-                      </span>
-                      <div>
-                        <p className="text-barber-cream font-medium text-sm">{segment.periodName}</p>
-                        <p className="text-xs text-barber-silver mt-0.5">
-                          {formatDateTime(segment.startTime)} → {formatDateTime(segment.endTime)}
+                {selectedBill.segments.length === 0 ? (
+                  <p className="text-sm text-barber-silver py-2">无分段（0元账单）</p>
+                ) : (
+                  selectedBill.segments.map((segment, idx) => (
+                    <div key={segment.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-barber-darker/50">
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-barber-gold/20 flex items-center justify-center text-barber-gold text-xs font-bold">
+                          {idx + 1}
+                        </span>
+                        <div>
+                          <p className="text-barber-cream font-medium text-sm">{segment.periodName}</p>
+                          <p className="text-xs text-barber-silver mt-0.5">
+                            {formatDateTime(segment.startTime)} → {formatDateTime(segment.endTime)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-barber-silver">
+                          {segment.durationMinutes.toFixed(1)}分钟 × ¥{segment.unitPrice}/分钟
                         </p>
+                        <p className="text-barber-gold font-bold mt-0.5">¥{segment.subtotal.toFixed(2)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-barber-silver">
-                        {segment.durationMinutes.toFixed(1)}分钟 × ¥{segment.unitPrice}/分钟
-                      </p>
-                      <p className="text-barber-gold font-bold mt-0.5">¥{segment.subtotal.toFixed(2)}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -537,6 +634,7 @@ export default function BillsList() {
                       {selectedBill.paymentMethod === 'alipay' && '💚 支付宝'}
                       {selectedBill.paymentMethod === 'card' && '💳 银行卡'}
                       {selectedBill.paymentMethod === 'cash' && '💰 现金'}
+                      {selectedBill.paymentMethod === 'confirm' && '✅ 确认结清'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">

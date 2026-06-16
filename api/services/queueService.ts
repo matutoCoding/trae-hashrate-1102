@@ -50,6 +50,7 @@ export function createTicket(request: CreateTicketRequest): QueueItem {
     position: originalPosition,
     createdAt: new Date(),
     originalPosition,
+    storeName: request.storeName || '总店',
   };
   
   addQueueItem(newItem);
@@ -124,6 +125,7 @@ export function vipInsert(request: VipInsertRequest): {
     position: insertPosition + 1,
     createdAt: new Date(),
     originalPosition: waitingItems.length + 1,
+    storeName: (request as any).storeName || '总店',
   };
   
   addQueueItem(newItem);

@@ -53,8 +53,8 @@ router.post('/:id/pay', (req, res) => {
     return res.status(400).json({ error: '支付方式和金额为必填项' });
   }
   
-  if (amount <= 0) {
-    return res.status(400).json({ error: '支付金额必须大于0' });
+  if (amount < 0) {
+    return res.status(400).json({ error: '支付金额不能为负数' });
   }
   
   const result = payBill(id, { paymentMethod, amount });

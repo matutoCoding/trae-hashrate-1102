@@ -74,6 +74,7 @@ export function createBillFromTicket(ticketId: string, endTime?: Date): {
     finalAmount: priceResult.totalAmount,
     status: 'pending',
     createdAt: new Date(),
+    storeName: queueItem.storeName || '总店',
   };
   
   addBill(bill);
@@ -151,33 +152,82 @@ export function getBillsStats() {
     return billDate >= today;
   });
   
-  const totalPaid = bills
+  const totalPending = bills
+    .filter(bill => bill.status === 'pending')
+    .reduce((sum, bill) => sum + bill.finalAmount, 0);
+  
+  const paidBillsAmount = bills
     .filter(bill => bill.status === 'paid')
     .reduce((sum, bill) => sum + bill.finalAmount, 0);
   
-  const totalRefunded = bills
+  const refundedBillsAmount = bills
     .filter(bill => bill.status === 'refunded')
     .reduce((sum, bill) => sum + bill.finalAmount, 0);
+
+  const totalGrossRevenue = paidBillsAmount + refundedBillsAmount;
+  const totalNetRevenue = totalGrossRevenue - refundedBillsAmount;
   
-  const todayPaid = todayBills
+  const todayPending = todayBills
+    .filter(b => b.status === 'pending')
+    .reduce((sum, b) => sum + b.finalAmount, 0);
+  
+  const todayPaidAmount = todayBills
     .filter(b => b.status === 'paid')
     .reduce((sum, b) => sum + b.finalAmount, 0);
   
-  const todayRefunded = todayBills
+  const todayRefundedAmount = todayBills
     .filter(b => b.status === 'refunded')
     .reduce((sum, b) => sum + b.finalAmount, 0);
+
+  const todayGrossRevenue = todayPaidAmount + todayRefundedAmount;
+  const todayNetRevenue = todayGrossRevenue - todayRefundedAmount;
+
+  const storeNames = [...new Set(bills.map(b => b.storeName || '总店'))];
+  const byStore = storeNames.map(storeName => {
+    const storeBills = bills.filter(b => (b.storeName || '总店') === storeName);
+    const storeTodayBills = todayBills.filter(b => (b.storeName || '总店') === storeName);
+    const sPaid = storeBills.filter(b => b.status === 'paid').reduce((s, b) => s + b.finalAmount, 0);
+    const sRefunded = storeBills.filter(b => b.status === 'refunded').reduce((s, b) => s + b.finalAmount, 0);
+    const sGross = sPaid + sRefunded;
+    const stPaid = storeTodayBills.filter(b => b.status === 'paid').reduce((s, b) => s + b.finalAmount, 0);
+    const stRefunded = storeTodayBills.filter(b => b.status === 'refunded').reduce((s, b) => s + b.finalAmount, 0);
+    const stGross = stPaid + stRefunded;
+    return {
+      storeName,
+      totalBills: storeBills.length,
+      pendingBills: storeBills.filter(b => b.status === 'pending').length,
+      paidBills: storeBills.filter(b => b.status === 'paid').length,
+      refundedBills: storeBills.filter(b => b.status === 'refunded').length,
+      pendingAmount: Math.round(storeBills.filter(b => b.status === 'pending').reduce((s, b) => s + b.finalAmount, 0) * 100) / 100,
+      paidAmount: Math.round(sPaid * 100) / 100,
+      refundedAmount: Math.round(sRefunded * 100) / 100,
+      grossRevenue: Math.round(sGross * 100) / 100,
+      netRevenue: Math.round((sGross - sRefunded) * 100) / 100,
+      todayBills: storeTodayBills.length,
+      todayPending: Math.round(storeTodayBills.filter(b => b.status === 'pending').reduce((s, b) => s + b.finalAmount, 0) * 100) / 100,
+      todayPaid: Math.round(stPaid * 100) / 100,
+      todayRefunded: Math.round(stRefunded * 100) / 100,
+      todayGrossRevenue: Math.round(stGross * 100) / 100,
+      todayNetRevenue: Math.round((stGross - stRefunded) * 100) / 100,
+    };
+  });
   
   return {
     totalBills: bills.length,
     paidBills: bills.filter(b => b.status === 'paid').length,
     pendingBills: bills.filter(b => b.status === 'pending').length,
     refundedBills: bills.filter(b => b.status === 'refunded').length,
-    totalRevenue: Math.round(totalPaid * 100) / 100,
-    totalNetRevenue: Math.round((totalPaid - totalRefunded) * 100) / 100,
-    totalRefunded: Math.round(totalRefunded * 100) / 100,
+    totalPending: Math.round(totalPending * 100) / 100,
+    totalRevenue: Math.round(paidBillsAmount * 100) / 100,
+    totalGrossRevenue: Math.round(totalGrossRevenue * 100) / 100,
+    totalNetRevenue: Math.round(totalNetRevenue * 100) / 100,
+    totalRefunded: Math.round(refundedBillsAmount * 100) / 100,
     todayBills: todayBills.length,
-    todayRevenue: Math.round(todayPaid * 100) / 100,
-    todayNetRevenue: Math.round((todayPaid - todayRefunded) * 100) / 100,
-    todayRefunded: Math.round(todayRefunded * 100) / 100,
+    todayPending: Math.round(todayPending * 100) / 100,
+    todayRevenue: Math.round(todayPaidAmount * 100) / 100,
+    todayGrossRevenue: Math.round(todayGrossRevenue * 100) / 100,
+    todayNetRevenue: Math.round(todayNetRevenue * 100) / 100,
+    todayRefunded: Math.round(todayRefundedAmount * 100) / 100,
+    byStore,
   };
 }
